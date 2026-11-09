@@ -193,10 +193,23 @@ class TestHopeInfrastructure(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()["mode"], "auto")
 
-        # 6. Chat endpoint approval command recognition
+        # 6. Chat endpoint approval command recognition & persistent history
         res = client.post("/api/chat", json={"message": "/status"})
         self.assertEqual(res.status_code, 200)
         self.assertIn("Status Report", res.json()["reply"])
+
+        # 7. Chat history persistence check
+        hist_res = client.get("/api/chat/history")
+        self.assertEqual(hist_res.status_code, 200)
+        messages = hist_res.json()["messages"]
+        self.assertGreaterEqual(len(messages), 2)  # User /status + Agent reply
+        self.assertEqual(messages[-2]["content"], "/status")
+        self.assertIn("Status Report", messages[-1]["content"])
+
+        # 8. Chat archives listing
+        arch_res = client.get("/api/chat/archives")
+        self.assertEqual(arch_res.status_code, 200)
+        self.assertIn("archives", arch_res.json())
 
 
 

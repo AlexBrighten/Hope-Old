@@ -109,11 +109,13 @@
 
       <!-- History Section -->
       <div class="sidebar-history">
-        <div class="history-section-title">Today</div>
-        <div class="history-item active" id="activeChatItem">Current Chat</div>
-        <div class="history-item" onclick="loadPrompt('Give me my morning briefing')">☀️ Morning Briefing</div>
-        <div class="history-item" onclick="loadPrompt('What is on my Google Calendar today?')">📅 Calendar Inspection</div>
-        <div class="history-item" onclick="loadPrompt('Search unread emails in Gmail')">📬 Email Review</div>
+        <div class="history-section-title">Active Conversation</div>
+        <div class="history-item active" id="activeChatItem">
+          <span>💬 Continuous Thread</span>
+        </div>
+
+        <div class="history-section-title" id="archiveSectionTitle" style="margin-top: 16px; display: none;">Archived Threads</div>
+        <div id="archivesList" style="display: flex; flex-direction: column; gap: 2px;"></div>
       </div>
 
       <!-- User Profile Footer -->

@@ -85,6 +85,9 @@ class MCPAgent:
         self.loop = asyncio.new_event_loop()
         self.local_brain = LocalBrain()
 
+        # Pre-seed conversational history from persistent workspace/chat_history.json
+        self._load_persisted_history()
+
         # Initialize Gemini Client lazily or gracefully
         self.client = None
         try:
@@ -99,6 +102,24 @@ class MCPAgent:
         threading.Thread(target=self._run, daemon=True).start()
         if not self.ready.wait(60):
             self.error = "MCP server did not start in 60 seconds"
+
+    def _load_persisted_history(self):
+        """Seed conversational context from workspace/chat_history.json across restarts."""
+        f = HERE / "workspace" / "chat_history.json"
+        if not f.exists():
+            return
+        try:
+            from google.genai import types
+            data = json.loads(f.read_text(encoding="utf-8"))
+            parsed = []
+            for msg in data[-20:]:
+                role = "user" if msg.get("role") == "user" else "model"
+                content = msg.get("content", "")
+                if content and not content.startswith(("/", "yes act-", "no act-")):
+                    parsed.append(types.Content(role=role, parts=[types.Part(text=content)]))
+            self.history = parsed[-20:]
+        except Exception:
+            pass
 
     def _run(self):
         asyncio.set_event_loop(self.loop)

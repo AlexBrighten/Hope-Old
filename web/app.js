@@ -1,6 +1,7 @@
 /**
  * Hope AI Agent — ChatGPT-Identical Application Logic
  * Pure Vanilla ES6 — Ultra-lightweight, zero build step, lightning fast.
+ * Full Continuous Thread & Permanent History Persistence.
  */
 
 // ── Application State ──────────────────────────────────────────────────────────
@@ -22,6 +23,9 @@ const elements = {
   sidebarNewChatBtn: document.getElementById('sidebarNewChatBtn'),
   headerNewChatBtn: document.getElementById('headerNewChatBtn'),
   sidebarApprovalsBadge: document.getElementById('sidebarApprovalsBadge'),
+  activeChatItem: document.getElementById('activeChatItem'),
+  archiveSectionTitle: document.getElementById('archiveSectionTitle'),
+  archivesList: document.getElementById('archivesList'),
   userName: document.getElementById('userName'),
   userPlan: document.getElementById('userPlan'),
   userAvatar: document.getElementById('userAvatar'),
@@ -219,6 +223,163 @@ document.querySelectorAll('.model-option').forEach((opt) => {
   });
 });
 
+// ── Continuous Thread & History Persistence ──────────────────────────────────
+
+function renderThread(messages) {
+  if (!messages || messages.length === 0) {
+    elements.welcomeHero.style.display = 'flex';
+    elements.chatThread.style.display = 'none';
+    elements.chatThread.innerHTML = '';
+    if (elements.activeChatItem) {
+      elements.activeChatItem.innerHTML = `<span>💬 Continuous Thread</span>`;
+    }
+    return;
+  }
+
+  elements.welcomeHero.style.display = 'none';
+  elements.chatThread.style.display = 'flex';
+  elements.chatThread.innerHTML = '';
+
+  messages.forEach((msg) => {
+    if (msg.role === 'user') {
+      appendUserMessage(msg.content);
+    } else {
+      const row = document.createElement('div');
+      row.className = 'message-row agent';
+      row.innerHTML = `
+        <div class="agent-wrapper">
+          <div class="agent-avatar">
+            <svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+          </div>
+          <div class="agent-body">
+            ${formatMarkdown(msg.content)}
+          </div>
+        </div>
+      `;
+      elements.chatThread.appendChild(row);
+    }
+  });
+
+  if (elements.activeChatItem) {
+    elements.activeChatItem.innerHTML = `<span>💬 Continuous Thread (${messages.length})</span>`;
+  }
+
+  // Auto-scroll to latest message
+  elements.chatViewport.scrollTop = elements.chatViewport.scrollHeight;
+}
+
+async function loadChatHistory() {
+  // 1. Instant optimistic load from client cache (0ms delay)
+  const cached = localStorage.getItem('hope_thread_cache');
+  if (cached) {
+    try {
+      const msgs = JSON.parse(cached);
+      if (msgs.length > 0) {
+        renderThread(msgs);
+      }
+    } catch (e) {}
+  }
+
+  // 2. Fetch full server-persisted continuous thread
+  try {
+    const res = await fetch('/api/chat/history');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.messages && data.messages.length > 0) {
+      renderThread(data.messages);
+      localStorage.setItem('hope_thread_cache', JSON.stringify(data.messages));
+    } else if (!cached) {
+      elements.welcomeHero.style.display = 'flex';
+      elements.chatThread.style.display = 'none';
+    }
+  } catch (err) {
+    console.log('Error loading chat history:', err);
+  }
+}
+
+async function fetchArchives() {
+  if (!elements.archivesList) return;
+  try {
+    const res = await fetch('/api/chat/archives');
+    if (!res.ok) return;
+    const data = await res.json();
+    const archives = data.archives || [];
+
+    if (archives.length > 0) {
+      elements.archiveSectionTitle.style.display = 'block';
+      elements.archivesList.innerHTML = archives
+        .map(
+          (a) => `
+        <div class="history-item" onclick="restoreArchive('${a.filename}')" title="${escapeHtml(a.preview)}">
+          <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;">
+            📁 ${escapeHtml(a.time_str)} (${a.count})
+          </div>
+        </div>
+      `
+        )
+        .join('');
+    } else {
+      elements.archiveSectionTitle.style.display = 'none';
+      elements.archivesList.innerHTML = '';
+    }
+  } catch (err) {
+    console.log('Error loading archives:', err);
+  }
+}
+
+window.restoreArchive = async function (filename) {
+  try {
+    const res = await fetch(`/api/chat/archives/${filename}/restore`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail);
+    showToast(data.message);
+    loadChatHistory();
+    fetchArchives();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+};
+
+async function startNewChat() {
+  const hasMessages = elements.chatThread.children.length > 0;
+  if (!hasMessages) {
+    elements.chatInput.focus();
+    return;
+  }
+
+  const shouldArchive = confirm(
+    'Start a fresh chat session? Your current conversation will be safely saved in Archived Threads so you can return to it anytime.'
+  );
+  if (!shouldArchive) return;
+
+  try {
+    const res = await fetch('/api/chat/clear', { method: 'POST' });
+    if (!res.ok) throw new Error('Clear failed');
+    localStorage.removeItem('hope_thread_cache');
+    elements.chatThread.innerHTML = '';
+    elements.chatThread.style.display = 'none';
+    elements.welcomeHero.style.display = 'flex';
+    elements.chatInput.value = '';
+    elements.chatInput.style.height = 'auto';
+    updateSendButton();
+    if (elements.activeChatItem) {
+      elements.activeChatItem.innerHTML = `<span>💬 Continuous Thread</span>`;
+    }
+    showToast('Current conversation thread archived.');
+    fetchArchives();
+    elements.chatInput.focus();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+elements.sidebarNewChatBtn.addEventListener('click', startNewChat);
+elements.headerNewChatBtn.addEventListener('click', startNewChat);
+elements.navChatBtn.addEventListener('click', () => {
+  // Focus chat without resetting
+  elements.chatInput.focus();
+});
+
 // ── Chat Messaging Dynamics ──────────────────────────────────────────────────
 function updateSendButton() {
   const hasText = elements.chatInput.value.trim().length > 0;
@@ -255,25 +416,11 @@ window.loadPrompt = function (text) {
   sendMessage();
 };
 
-function startNewChat() {
-  elements.chatThread.innerHTML = '';
-  elements.chatThread.style.display = 'none';
-  elements.welcomeHero.style.display = 'flex';
-  elements.chatInput.value = '';
-  elements.chatInput.style.height = 'auto';
-  updateSendButton();
-  elements.chatInput.focus();
-}
-
-elements.sidebarNewChatBtn.addEventListener('click', startNewChat);
-elements.headerNewChatBtn.addEventListener('click', startNewChat);
-elements.navChatBtn.addEventListener('click', startNewChat);
-
 async function sendMessage(promptText) {
   const text = (promptText || elements.chatInput.value).trim();
   if (!text || state.isGenerating) return;
 
-  // Hide welcome hero, show thread
+  // Ensure thread container is visible
   elements.welcomeHero.style.display = 'none';
   elements.chatThread.style.display = 'flex';
 
@@ -303,6 +450,18 @@ async function sendMessage(promptText) {
     // Populate Agent Body
     const bodyEl = agentRow.querySelector('.agent-body');
     bodyEl.innerHTML = formatMarkdown(data.reply);
+
+    // Save to local cache
+    try {
+      const cached = localStorage.getItem('hope_thread_cache');
+      const msgs = cached ? JSON.parse(cached) : [];
+      msgs.push({ role: 'user', content: text });
+      msgs.push({ role: 'agent', content: data.reply });
+      localStorage.setItem('hope_thread_cache', JSON.stringify(msgs));
+      if (elements.activeChatItem) {
+        elements.activeChatItem.innerHTML = `<span>💬 Continuous Thread (${msgs.length})</span>`;
+      }
+    } catch (e) {}
 
     // Update pending approvals if changed
     if (typeof data.pending_count === 'number') {
@@ -532,7 +691,8 @@ function renderRecentList(recentItems) {
 
   filtered.forEach((item) => {
     const div = document.createElement('div');
-    div.style.cssText = 'background:var(--bg-surface);padding:10px 14px;border-radius:10px;font-size:13px;display:flex;justify-content:space-between;align-items:center;';
+    div.style.cssText =
+      'background:var(--bg-surface);padding:10px 14px;border-radius:10px;font-size:13px;display:flex;justify-content:space-between;align-items:center;';
 
     let color = '#34d399';
     if (item.status === 'rejected') color = '#f87171';
@@ -653,7 +813,9 @@ async function fetchStatus() {
 
     // Owner info in footer
     if (st.owner) elements.userName.textContent = st.owner;
-    elements.userPlan.textContent = st.local_brain_available ? `Dual-Brain (${st.local_brain_model})` : 'Gemini Cloud Brain';
+    elements.userPlan.textContent = st.local_brain_available
+      ? `Dual-Brain (${st.local_brain_model})`
+      : 'Gemini Cloud Brain';
 
     // Model options selection check
     document.querySelectorAll('.model-option').forEach((opt) => {
@@ -689,7 +851,9 @@ function renderIntegrationsGrid(st) {
     <div style="background:var(--bg-surface);padding:12px;border-radius:10px;border:1px solid var(--border-light);display:flex;flex-direction:column;gap:4px;">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <span style="font-weight:600;font-size:13.5px;">${item.icon} ${escapeHtml(item.name)}</span>
-        <span style="font-size:10.5px;font-weight:700;color:${item.active ? '#34d399' : '#8e8e8e'};">${item.active ? '● ACTIVE' : '○ OFF'}</span>
+        <span style="font-size:10.5px;font-weight:700;color:${item.active ? '#34d399' : '#8e8e8e'};">${
+        item.active ? '● ACTIVE' : '○ OFF'
+      }</span>
       </div>
       <span style="font-size:12px;color:var(--text-muted);">${escapeHtml(item.desc)}</span>
     </div>
@@ -705,12 +869,17 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ── Startup Polling ──────────────────────────────────────────────────────────
+// ── Startup Initialization & Polling ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // 1. Immediately load persistent continuous conversation thread
+  loadChatHistory();
+  fetchArchives();
+
+  // 2. Load system status and pending approvals
   fetchStatus();
   fetchApprovals();
 
-  // Poll approvals & status every 4 seconds
+  // 3. Background polling for live status and approval alerts every 4 seconds
   setInterval(() => {
     fetchStatus();
     if (elements.approvalsModal.classList.contains('open')) {

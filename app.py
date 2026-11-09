@@ -16,6 +16,7 @@ import datetime
 import json
 import os
 import re
+import secrets
 import time
 from pathlib import Path
 from typing import Optional
@@ -146,6 +147,50 @@ async def get_status(request: Request):
     }
 
 
+# ── Persistent Chat Storage ───────────────────────────────────────────────────
+
+CHAT_HISTORY_FILE = HERE / "workspace" / "chat_history.json"
+ARCHIVES_DIR = HERE / "workspace" / "chat_archives"
+
+
+def load_chat_history() -> list[dict]:
+    """Load persistent conversation thread from workspace/chat_history.json."""
+    if CHAT_HISTORY_FILE.exists():
+        try:
+            return json.loads(CHAT_HISTORY_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+
+def save_chat_history(messages: list[dict]):
+    """Persist conversation thread to workspace/chat_history.json."""
+    try:
+        CHAT_HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+        CHAT_HISTORY_FILE.write_text(json.dumps(messages, indent=2), encoding="utf-8")
+    except Exception as e:
+        print(f"Error saving chat history: {e}")
+
+
+def append_chat_message(role: str, content: str) -> dict:
+    """Append a single message turn to the persistent thread."""
+    history = load_chat_history()
+    msg_id = f"msg-{secrets.token_hex(4)}"
+    now = time.time()
+    time_str = time.strftime("%I:%M %p", time.localtime(now))
+    entry = {
+        "id": msg_id,
+        "role": role,
+        "content": content,
+        "timestamp": now,
+        "time_str": time_str,
+    }
+    history.append(entry)
+    # Maintain continuous thread (up to 1,000 turns)
+    save_chat_history(history[-1000:])
+    return entry
+
+
 def handle_chat_message(clean: str) -> tuple[str, int]:
     """Execute chat message through approval gates, shortcuts, or Dual-Brain."""
     lower = clean.lower()
@@ -201,17 +246,92 @@ def handle_chat_message(clean: str) -> tuple[str, int]:
     return reply, len(pending)
 
 
+@app.get("/api/chat/history")
+async def get_chat_history(request: Request):
+    """Retrieve full continuous conversation thread."""
+    verify_auth(request)
+    messages = load_chat_history()
+    return {"messages": messages, "count": len(messages)}
+
+
+@app.post("/api/chat/clear")
+async def clear_chat_history(request: Request):
+    """Archive the current continuous thread and start fresh."""
+    verify_auth(request)
+    history = load_chat_history()
+    if history:
+        ARCHIVES_DIR.mkdir(parents=True, exist_ok=True)
+        archive_file = ARCHIVES_DIR / f"thread_{int(time.time())}.json"
+        archive_file.write_text(json.dumps(history, indent=2), encoding="utf-8")
+    save_chat_history([])
+    agent.history = []
+    return {"success": True, "message": "Thread archived and new chat started."}
+
+
+@app.get("/api/chat/archives")
+async def get_chat_archives(request: Request):
+    """List archived past chat threads."""
+    verify_auth(request)
+    if not ARCHIVES_DIR.exists():
+        return {"archives": []}
+    files = sorted(ARCHIVES_DIR.glob("*.json"), key=os.path.getmtime, reverse=True)
+    results = []
+    for f in files:
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+            first_msg = data[0]["content"][:60] if data else "Empty thread"
+            results.append({
+                "filename": f.name,
+                "timestamp": f.stat().st_mtime,
+                "time_str": time.strftime("%b %d, %Y %I:%M %p", time.localtime(f.stat().st_mtime)),
+                "count": len(data),
+                "preview": first_msg,
+            })
+        except Exception:
+            pass
+    return {"archives": results}
+
+
+@app.post("/api/chat/archives/{filename}/restore")
+async def restore_chat_archive(filename: str, request: Request):
+    """Restore an archived chat thread into the active thread."""
+    verify_auth(request)
+    archive_file = ARCHIVES_DIR / filename
+    if not archive_file.exists() or not filename.endswith(".json"):
+        raise HTTPException(status_code=404, detail="Archive not found.")
+    try:
+        data = json.loads(archive_file.read_text(encoding="utf-8"))
+        save_chat_history(data)
+        agent._load_persisted_history()
+        return {"success": True, "message": f"Restored thread with {len(data)} messages."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest, request: Request):
-    """Standard conversational endpoint with intent parsing and approval shortcuts."""
+    """Standard conversational endpoint with persistent thread tracking."""
     verify_auth(request)
     clean = req.message.strip()
     if not clean:
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
+    # 1. Permanently record user message
+    user_msg = append_chat_message("user", clean)
+
+    # 2. Execute with Dual-Brain
     loop = asyncio.get_event_loop()
     reply, pending_count = await loop.run_in_executor(None, handle_chat_message, clean)
-    return {"reply": reply, "pending_count": pending_count}
+
+    # 3. Permanently record agent response
+    agent_msg = append_chat_message("agent", reply)
+
+    return {
+        "reply": reply,
+        "pending_count": pending_count,
+        "user_msg": user_msg,
+        "agent_msg": agent_msg,
+    }
 
 
 @app.get("/api/chat/stream")
