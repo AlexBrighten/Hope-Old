@@ -1,1 +1,9 @@
 .env
+token.json
+credentials.json
+__pycache__/
+node_modules/
+workspace/
+*.pyc
+.venv/
+venv/

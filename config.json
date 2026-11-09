@@ -1,5 +1,16 @@
 {
   "name": "Hope",
   "owner": "Alex",
-  "model": "gemini-3.5-flash-lite"
+  "model": "gemini-3.5-flash-lite",
+  "local_model": "llama3.2:3b",
+  "local_model_candidates": [
+    "llama3.2:3b",
+    "phi3.5",
+    "qwen2.5:3b",
+    "gemma-3-4b",
+    "qwen2.5:1.5b"
+  ],
+  "ollama_url": "http://localhost:11434",
+  "routing_mode": "auto",
+  "enable_background_memory": true
 }

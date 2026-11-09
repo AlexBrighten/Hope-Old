@@ -1,0 +1,40 @@
+# ─── Gemini Brain ───
+google-genai>=1.0.0
+
+# ─── MCP Framework ───
+mcp>=1.0.0
+
+# ─── Chat UI ───
+gradio>=4.0.0
+
+# ─── Environment & Utilities ───
+python-dotenv>=1.0.0
+requests>=2.31.0
+
+# ─── Web Search & Scraping ───
+trafilatura>=1.6.0
+ddgs>=0.1.0
+beautifulsoup4>=4.12.0
+
+# ─── GitHub ───
+PyGithub>=2.1.0
+
+# ─── Google APIs (Gmail, Calendar, Docs, Drive) ───
+google-api-python-client>=2.120.0
+google-auth-httplib2>=0.2.0
+google-auth-oauthlib>=1.2.0
+
+# ─── Notion ───
+notion-client>=2.2.0
+
+# ─── Webhook / API Hooks Server ───
+fastapi>=0.110.0
+uvicorn>=0.28.0
+
+# ─── Calendar (legacy iCal fallback) ───
+icalendar>=5.0.0
+recurring-ical-events>=2.0.0
+
+# ─── Telegram Bot ───
+# (uses raw requests, no extra dep needed)
+
