@@ -14,5 +14,6 @@
   "routing_mode": "auto",
   "enable_background_memory": true,
   "email_draft_only": true,
-  "require_approval": true
+  "require_approval": true,
+  "ntfy_topic": ""
 }

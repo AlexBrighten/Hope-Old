@@ -6,6 +6,8 @@
 
 Hope operates over **43 FastMCP tools** connecting directly to your everyday productivity stack: **GitHub**, **Gmail**, **Google Calendar**, **Browser Automation (Puppeteer & API Hooks)**, **Google Docs**, and **Google Sheets**.
 
+Access Hope anywhere from your **desktop browser** or **phone** via a modern, smooth, zero-cost **Progressive Web App (PWA)** with **1-click mobile approvals** and **free lock-screen push notifications**.
+
 ---
 
 ## 📑 Table of Contents
@@ -15,17 +17,19 @@ Hope operates over **43 FastMCP tools** connecting directly to your everyday pro
 - [🚀 Quick Start](#-quick-start)
   - [On Debian Linux (Laptop)](#on-debian-linux-laptop--intel-core-i7-6600u--8-gb-ram)
   - [On Windows](#on-windows)
+- [📱 Executive Web App & Mobile Phone Access](#-executive-web-app--mobile-phone-access)
+  - [Access from Phone (100% Free via Tailscale)](#1-access-from-phone-100-free-via-tailscale)
+  - [Lock-Screen Push Notifications & 1-Click Approvals (ntfy.sh)](#2-lock-screen-push-notifications--1-click-approvals-ntfysh)
+  - [Install as Native App (PWA)](#3-install-as-native-app-pwa)
 - [🔑 Step-by-Step Integration Setup](#-step-by-step-integration-setup)
   - [1. Gemini Brain](#1-gemini-brain)
   - [2. Local Brain (Ollama)](#2-local-brain-ollama)
-  - [3. GitHub Integration](#3-github-integration)
-  - [4. Google Ecosystem (Unified OAuth for Gmail, Calendar, Docs)](#4-google-ecosystem-unified-oauth)
+  - [3. GitHub Integration](#3-github-integration-security-fine-grained-token)
+  - [4. Google Ecosystem (Unified OAuth for Gmail, Calendar, Docs, Sheets)](#4-google-ecosystem-unified-oauth)
   - [5. Gmail App Password Fallback (IMAP/SMTP)](#5-gmail-app-password-fallback-imapsmtp)
   - [6. Browser Automation (Puppeteer)](#6-browser-automation-puppeteer)
-  - [7. Telegram Mobile Interface](#7-telegram-mobile-interface)
 - [🛠️ Tool Suite Reference (43 Tools)](#️-tool-suite-reference-43-tools)
 - [🧠 Dual-Brain Routing & Modes](#-dual-brain-routing--modes)
-- [📱 Running User Interfaces](#-running-user-interfaces)
 - [🛡️ Security & Human-in-the-Loop Safeguards](#️-security--human-in-the-loop-safeguards)
 - [🧪 Testing & Diagnostics](#-testing--diagnostics)
 - [📂 Project Directory Structure](#-project-directory-structure)
@@ -45,6 +49,7 @@ Hope operates over **43 FastMCP tools** connecting directly to your everyday pro
 | **📊 Google Sheets** | Create spreadsheets, read cell ranges as tables, write/overwrite matrices, append row entries, list tabs, and search spreadsheets. |
 | **🧠 Second Brain (Ollama)** | Intent classification, local fast replies with **0 API tokens**, email/page summarization before sending to Gemini, and autonomous memory archiving to `memory.md`. |
 | **🪝 Inbound Webhook Server** | Standalone webhook listener on port 8000 handling GitHub push/PR events or custom webhooks to trigger Hope. |
+| **📱 Executive Web Dashboard** | Modern, responsive dark-mode PWA with live chat, 1-click approval center, memory editor, and executive morning briefing. |
 
 ---
 
@@ -52,7 +57,7 @@ Hope operates over **43 FastMCP tools** connecting directly to your everyday pro
 
 ```mermaid
 flowchart TD
-    User([User / Telegram / Web UI / Webhook]) --> Router[brain/router.py: Smart Router]
+    User([User / Web Dashboard / Mobile PWA / Webhook]) --> Router[brain/router.py: Smart Router]
     
     subgraph Brain Layer
         Router -->|Casual Chat / Triage / Offline| LocalBrain[Local Brain: Ollama 3B-4B<br/>llama3.2:3b / phi3.5 / qwen2.5]
@@ -97,11 +102,12 @@ flowchart TD
    nano .env
    ```
 
-3. **Start Hope**:
+3. **Start Hope Web App & API Server**:
    ```bash
    source venv/bin/activate
-   python agent.py           # Launch Gradio Web UI on http://127.0.0.1:7860
+   python app.py
    ```
+   Open **http://localhost:8080** in your browser.
 
 ---
 
@@ -117,8 +123,55 @@ flowchart TD
 
 3. **Start Hope**:
    ```powershell
-   python agent.py
+   python app.py
    ```
+   Open **http://localhost:8080** in your browser.
+
+---
+
+## 📱 Executive Web App & Mobile Phone Access
+
+Hope includes a dedicated web application and Progressive Web App (PWA) designed to give you complete executive control from both desktop and phone with **$0.00 spend**.
+
+### 1. Access from Phone (100% Free via Tailscale)
+Tailscale creates a secure, encrypted peer-to-peer mesh network between your devices without exposing any ports to the public internet:
+1. Install [Tailscale](https://tailscale.com/) on your Debian PC:
+   ```bash
+   curl -fsSL https://tailscale.com/install.sh | sh
+   sudo tailscale up
+   ```
+2. Install the free **Tailscale** app on your phone (iOS App Store or Google Play) and log into the same account.
+3. Check your Debian PC's Tailscale IP (e.g. `100.x.y.z`):
+   ```bash
+   tailscale ip -4
+   ```
+4. On your phone, open your browser and navigate to:
+   ```text
+   http://100.x.y.z:8080
+   ```
+   *You now have full access to Hope anywhere in the world!*
+
+---
+
+### 2. Lock-Screen Push Notifications & 1-Click Approvals (ntfy.sh)
+Hope integrates with [ntfy.sh](https://ntfy.sh) to deliver free real-time push alerts with actionable buttons straight to your phone's lock screen:
+1. Choose a unique secret topic name (e.g., `alex-hope-alerts-99x`).
+2. Add to `.env`:
+   ```env
+   NTFY_TOPIC=alex-hope-alerts-99x
+   WEB_BASE_URL=http://100.x.y.z:8080
+   ```
+3. Install the free **ntfy** app on your iOS or Android phone, and subscribe to your topic (`alex-hope-alerts-99x`).
+4. Whenever Hope stages a mutating action (email send, commit, PR, event delete), your phone rings with a lock-screen notification containing **[Approve]** and **[Reject]** buttons!
+
+---
+
+### 3. Install as Native App (PWA)
+Hope is a fully-configured Progressive Web App:
+- **iOS (iPhone/iPad)**: In Safari, tap the **Share** button &rarr; **Add to Home Screen**.
+- **Android**: In Chrome, tap the **three dots menu** &rarr; **Install App** or **Add to Home screen**.
+
+Hope launches full-screen with its own icon, app shell caching, and no browser address bar!
 
 ---
 
@@ -164,7 +217,7 @@ Hope automatically detects installed models via `GET http://localhost:11434/api/
 ---
 
 ### 4. Google Ecosystem (Unified OAuth)
-*A single credentials file authorizes Gmail (read/write), Google Calendar (create/edit), and Google Docs all at once.*
+*A single credentials file authorizes Gmail (read/write), Google Calendar (create/edit), Google Docs, and Google Sheets all at once.*
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/).
 2. Create a project (e.g. `Hope-Agent`).
@@ -210,54 +263,32 @@ Puppeteer is pre-configured in `package.json`.
 
 ---
 
-### 7. Telegram Mobile Interface
-1. Open Telegram and search for `@BotFather`.
-2. Send `/newbot` to create your bot and copy the bot token.
-3. Add to `.env`:
-   ```env
-   TELEGRAM_BOT_TOKEN=123456789:ABC...
-   ```
-4. Message your bot once, then run:
-   ```bash
-   python chatid.py
-   ```
-   Copy your chat ID into `.env`:
-   ```env
-   TELEGRAM_CHAT_ID=your_chat_id
-   ```
-5. Start the bot:
-   ```bash
-   python telegram_bot.py
-   ```
-
----
-
 ## 🛠️ Tool Suite Reference (43 Tools)
 
 ### 🐙 GitHub Tools (`tools/github_tool.py`)
 - `github_list_repos(visibility="all", limit=10)` — Lists your repositories with stars and descriptions.
 - `github_get_repo_info(repo_name)` — Gets default branch, open issues, stars, forks, and last push date.
 - `github_read_file(repo_name, file_path, branch="")` — Reads file contents from any repo branch.
-- `github_create_or_update_file(repo_name, file_path, content, commit_message, branch="")` — Commits file changes.
+- `github_create_or_update_file(repo_name, file_path, content, commit_message, branch="")` — Commits file changes (requires approval).
 - `github_list_issues(repo_name, state="open", limit=10)` — Lists issues with numbers, titles, and labels.
 - `github_create_issue(repo_name, title, body="", labels="")` — Opens a new issue.
 - `github_comment_issue(repo_name, issue_number, comment)` — Adds a comment to an issue or PR.
 - `github_list_prs(repo_name, state="open", limit=10)` — Lists pull requests.
-- `github_create_pr(repo_name, title, head, base="main", body="")` — Opens a pull request.
+- `github_create_pr(repo_name, title, head, base="main", body="")` — Opens a pull request (requires approval).
 - `github_search_code(query, repo="")` — Searches code across GitHub or inside a specific repo.
 
 ### ✉️ Gmail Tools (`tools/gmail_tool.py`)
 - `gmail_list_messages(query="is:unread", max_results=5)` — Searches emails by query/label.
 - `gmail_read_message(message_id)` — Fetches decoded subject, from, to, date, and body.
-- `gmail_send_email(to, subject, body)` — Sends an email to any recipient.
-- `gmail_reply_email(message_id, body)` — Sends a threaded reply preserving email headers.
-- `gmail_create_draft(to, subject, body)` — Creates a draft in Gmail.
+- `gmail_send_email(to, subject, body)` — Sends an email to any recipient (requires approval).
+- `gmail_reply_email(message_id, body)` — Sends a threaded reply (requires approval).
+- `gmail_create_draft(to, subject, body)` — Creates a draft in Gmail for manual review.
 
 ### 📅 Google Calendar Tools (`tools/calendar_tool.py`)
 - `calendar_list_events(days_ahead=7, max_results=15)` — Lists upcoming events with IDs, times, and summaries.
 - `calendar_create_event(summary, start_time, end_time, description="", location="")` — Creates calendar events.
 - `calendar_update_event(event_id, new_start_time="", new_end_time="", new_summary="", new_description="")` — Reschedules or updates events.
-- `calendar_delete_event(event_id)` — Cancels/deletes an event.
+- `calendar_delete_event(event_id)` — Cancels/deletes an event (requires approval).
 - `calendar_quick_add(text)` — Natural language event creation (e.g. *"Team lunch tomorrow at 1pm"*).
 
 ### 🌐 Browser Automation Tools (`tools/browser_tool.py`)
@@ -307,34 +338,6 @@ Hope's dispatcher (`brain/router.py`) dynamically routes queries:
 
 ---
 
-## 📱 Running User Interfaces
-
-### 1. Web Chat Interface (Gradio)
-```bash
-python agent.py
-```
-Open [http://127.0.0.1:7860](http://127.0.0.1:7860) in any browser.
-
-### 2. Telegram Bot
-```bash
-python telegram_bot.py
-```
-Control Hope from your phone anywhere in the world.
-
-### 3. Morning Briefing Runner
-```bash
-python briefing.py
-```
-Scans your upcoming calendar schedule, searches for high-priority unread emails, checks reminders, prints the summary, and sends it to your email.
-
-### 4. Webhook Receiver (Localhost 127.0.0.1)
-```bash
-python hooks_server.py
-```
-Starts a secure HTTP listener strictly bound to `127.0.0.1:8000` with GitHub HMAC signature verification.
-
----
-
 ## 🛡️ Security & Human-in-the-Loop Safeguards
 
 Hope includes strict safety boundaries to protect your credentials, repositories, and communications:
@@ -350,28 +353,20 @@ Hope includes strict safety boundaries to protect your credentials, repositories
   - `github_create_pr`
   - `github_create_issue` / `github_comment_issue`
   - `calendar_delete_event`
-- Hope generates a unique action ID (e.g. `act-1a2b`) and sends an urgent notification to your verified Telegram:
-  ```text
-  🚨 Action Approval Required
-  • Action: github_create_pr
-  • Details: Create PR in 'AlexBrighten/Hope': 'Add safety gates' (feature -> main)
-  Reply with 'yes act-1a2b' to approve, or 'no act-1a2b' to reject.
-  ```
-- Simply text `yes` or `no` in Telegram (or in the Gradio chat) to approve or reject the action.
+- Hope generates a unique action ID (e.g. `act-1a2b`), stages it in `workspace/pending_actions.json`, and alerts your dashboard and mobile lock-screen:
+  - In the **Approvals** tab: click **[✓ Approve & Execute]** or **[✕ Reject]**.
+  - In chat: reply `yes act-1a2b` or `no act-1a2b`.
+  - On phone: tap the **Approve** button directly on the notification!
 
 ### 3. Fine-Grained GitHub Tokens & Repository Allowlist
 - Hope recommends and requires **Fine-Grained Personal Access Tokens** scoped to specific repositories only.
 - Set `GITHUB_ALLOWED_REPOS=owner/repo1,owner/repo2` in `.env` to enforce a hard whitelist against any unauthorized repository writes.
 
 ### 4. Localhost-Only Webhook Receiver with HMAC Verification
-- `hooks_server.py` binds strictly to `127.0.0.1` (never exposed to `0.0.0.0`).
+- `hooks_server.py` binds strictly to `127.0.0.1` (never exposed to public internet without reverse proxy).
 - Every incoming GitHub webhook is verified using HMAC-SHA256 (`X-Hub-Signature-256`) against your `GITHUB_WEBHOOK_SECRET`. Unsigned or tampered requests are immediately rejected with `401 Unauthorized`.
 
-### 5. Telegram Chat ID Lock
-- `telegram_bot.py` strictly checks `str(chat_id) == str(TELEGRAM_CHAT_ID)`.
-- Messages, edits, or commands from any unauthorized chat ID are logged as security alerts and instantly dropped.
-
-### 6. Strict Credential & Cache Ignore Rules
+### 5. Strict Credential & Cache Ignore Rules
 - `.gitignore` strictly covers: `.env`, `credentials.json`, `token.json`, `workspace/`, `venv/`, `.venv/`, and `node_modules/`.
 - `token.json` holds OAuth tokens granting access to your Gmail and Google Drive — it is never committed or pushed to Git.
 
@@ -384,9 +379,9 @@ Run the full automated test suite:
 python -m unittest tests/test_hope.py
 ```
 
-Check agent and tool connectivity:
+Check agent status via REST API:
 ```bash
-python -c "from mcp_agent import MCPAgent; a = MCPAgent(); print(a.status())"
+python -c "import requests; print(requests.get('http://localhost:8080/api/status').json())"
 ```
 
 Test Puppeteer browser navigation:
@@ -405,13 +400,23 @@ python -c "from brain.local_brain import LocalBrain; b = LocalBrain(); print('Mo
 
 ```text
 Hope/
+├── app.py                       # Modern FastAPI Web App & REST/SSE Server
+├── web/                         # Lightweight, Zero-Build Frontend & PWA
+│   ├── index.html               # Responsive executive dashboard
+│   ├── styles.css               # Dark-mode glassmorphism styling
+│   ├── app.js                   # Vanilla ES6 reactive client
+│   ├── manifest.json            # PWA Web App Manifest
+│   ├── sw.js                    # Service Worker (offline shell & push alerts)
+│   └── icons/                   # App icons (icon.svg, icon-192, icon-512)
+│
 ├── brain/                       # Dual-Brain Layer
 │   ├── __init__.py              # Brain package exports
-│   ├── local_brain.py           # Ollama integration (discovery, chat, summarization, memory)
+│   ├── local_brain.py           # Ollama integration (discovery, chat, memory distillation)
 │   └── router.py                # Smart intent router (heuristics + classifier)
 │
-├── tools/                       # FastMCP Modular Tools Suite
+├── tools/                       # FastMCP Modular Tools Suite (43 Tools)
 │   ├── __init__.py              # Master registry (exports ALL_TOOLS)
+│   ├── approval.py              # Human approval gate & mobile push notifications
 │   ├── core.py                  # Web search, page fetch, files, memory, time
 │   ├── github_tool.py           # GitHub integration (10 tools)
 │   ├── gmail_tool.py            # Gmail read/write (5 tools)
@@ -423,20 +428,17 @@ Hope/
 │
 ├── workspace/                   # Safe sandbox directory
 │   ├── memory.md                # Long-term owner memory notes
+│   ├── pending_actions.json     # Staged actions awaiting approval
 │   └── webhook_log.jsonl        # Log of received webhook events
 │
 ├── tests/                       # Test Suite
-│   └── test_hope.py             # Unit tests for tools, router, fallbacks
+│   └── test_hope.py             # 12 Unit tests (Tools, Brain, Endpoints)
 │
-├── agent.py                     # Gradio web chat interface
-├── telegram_bot.py              # Telegram bot runner
-├── briefing.py                  # Morning executive briefing runner
 ├── server.py                    # FastMCP tool server
 ├── mcp_agent.py                 # Core MCP agent coordinator
 ├── hooks_server.py              # Inbound webhook receiver (port 8000)
 ├── puppeteer_runner.js          # Node.js Puppeteer browser automation engine
-├── chatid.py                    # Helper to find Telegram chat ID
-├── speedtest.py                 # Latency benchmark tool
+├── briefing.py                  # CLI Morning executive briefing runner
 │
 ├── setup_debian.sh              # Automated installer for Debian Linux
 ├── setup.ps1                    # Automated installer for Windows
@@ -452,6 +454,18 @@ Hope/
 
 ## ❓ Troubleshooting & FAQ
 
+#### Q: How do I pull the latest changes on my other PC without leftover deleted files?
+**A**: Run:
+```bash
+git fetch origin
+git reset --hard origin/main
+git clean -fd
+```
+This guarantees your working directory perfectly mirrors the remote repository and removes any deleted files.
+
+#### Q: Will Ollama slow down my laptop (8 GB RAM)?
+**A**: No! We deliberately sized Hope for `llama3.2:3b` (~2.2 GB RAM) or `qwen2.5:1.5b` (~1.1 GB RAM). It leaves over 5 GB of RAM completely free for your operating system and web browsing.
+
 #### Q: Google OAuth says "Google hasn't verified this app"
 **A**: When creating your Google Cloud OAuth consent screen in testing mode, click **Advanced** and then click **Go to Hope (unsafe)**. This is normal for private personal desktop applications.
 
@@ -461,9 +475,6 @@ Hope/
 sudo apt-get install -y libnss3 libatk-bridge2.0-0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2
 ```
 *(The `setup_debian.sh` script does this automatically).*
-
-#### Q: Will Ollama slow down my laptop (8 GB RAM)?
-**A**: No! We deliberately sized Hope for `llama3.2:3b` (~2.2 GB RAM) or `qwen2.5:1.5b` (~1.1 GB RAM). It leaves over 5 GB of RAM completely free for your operating system and web browsing.
 
 #### Q: What if an integration is missing its API key?
 **A**: Hope degrades gracefully. If you ask for GitHub without setting `GITHUB_TOKEN`, Hope will not crash — it will reply with clear step-by-step instructions on how to generate and add the token!

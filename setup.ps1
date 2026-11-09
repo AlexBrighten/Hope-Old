@@ -1,4 +1,4 @@
-# ─────────────────────────────────────────────────────────────────────
+﻿# ─────────────────────────────────────────────────────────────────────
 #  setup.ps1 — Full setup script for Hope AI Agent on Windows
 # ─────────────────────────────────────────────────────────────────────
 
@@ -50,8 +50,7 @@ python -c "import tools; print(f'  ✓ {len(tools.ALL_TOOLS)} tools loaded succe
 
 Write-Host "`n═══════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host "  Setup complete!" -ForegroundColor Cyan
-Write-Host "  Run: python agent.py       (Web UI)" -ForegroundColor White
-Write-Host "  Run: python telegram_bot.py (Telegram Bot)" -ForegroundColor White
-Write-Host "  Run: python hooks_server.py (Webhook Server)" -ForegroundColor White
+Write-Host "  Run: python app.py          (Modern Web Dashboard & PWA at http://localhost:8080)" -ForegroundColor White
+Write-Host "  Run: python hooks_server.py (GitHub Webhook Listener)" -ForegroundColor White
 Write-Host "═══════════════════════════════════════════" -ForegroundColor Cyan
 

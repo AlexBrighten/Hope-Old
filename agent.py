@@ -1,28 +1,23 @@
 """
-agent.py — Web Chat Interface for Hope AI Agent via Gradio.
+agent.py — Legacy Web Chat Interface for Hope AI Agent via Gradio.
+
+Note: Hope now features a modern, lightweight, full-featured FastAPI web application
+and PWA. We recommend running:
+    python app.py
+to access the complete executive dashboard with approval center, memory editor, and mobile support.
 """
 
-import json
+import re
+import sys
 from pathlib import Path
-import gradio as gr
 
 from mcp_agent import NAME, OWNER, MCPAgent
-
-import re
-from tools.approval import approve_action, reject_action, _pending, _load_pending
+from tools.approval import _load_pending, _pending, approve_action, reject_action
 
 agent = MCPAgent()
-status = agent.status()
-
-print("═══════════════════════════════════════════")
-print(f"  {NAME} AI Agent — Dual-Brain Ready")
-print(f"  Cloud Brain: {status['gemini_model']} ({'Connected' if status['gemini_connected'] else 'Awaiting API Key'})")
-print(f"  Local Brain: {status['local_brain_model']} ({'Ready' if status['local_brain_available'] else 'Offline'})")
-print(f"  MCP Tools:   {len(agent.tool_names()) if agent.session else agent.error}")
-print("═══════════════════════════════════════════")
 
 
-def respond(message: str, history: list):
+def respond(message: str, history: list = None):
     clean = message.strip()
     lower = clean.lower()
 
@@ -72,18 +67,41 @@ def respond(message: str, history: list):
     return agent.ask(message)
 
 
-description = (
-    f"Personal autonomous executive assistant for {OWNER}. "
-    "Powered by Dual-Brain architecture (Gemini + Local Ollama). "
-    "Equipped with GitHub, Gmail, Calendar, Browser, Google Docs, and Google Sheets integrations. "
-    "Type `/status` to view active integrations."
-)
+def main():
+    try:
+        import gradio as gr
+    except ImportError:
+        print("═══════════════════════════════════════════════════════════════")
+        print("  Gradio is not installed.")
+        print("  Hope has been upgraded to a modern FastAPI Web App & PWA!")
+        print("  Run instead:")
+        print("      python app.py")
+        print("  to launch the full-featured dashboard at http://localhost:8080")
+        print("═══════════════════════════════════════════════════════════════")
+        sys.exit(0)
 
-demo = gr.ChatInterface(
-    fn=respond,
-    title=f"{NAME} — Personal AI Executive",
-    description=description,
-)
+    status = agent.status()
+    print("═══════════════════════════════════════════")
+    print(f"  {NAME} AI Agent — Dual-Brain Ready")
+    print(f"  Cloud Brain: {status['gemini_model']} ({'Connected' if status['gemini_connected'] else 'Awaiting API Key'})")
+    print(f"  Local Brain: {status['local_brain_model']} ({'Ready' if status['local_brain_available'] else 'Offline'})")
+    print(f"  MCP Tools:   {len(agent.tool_names()) if agent.session else agent.error}")
+    print("═══════════════════════════════════════════")
+
+    description = (
+        f"Personal autonomous executive assistant for {OWNER}. "
+        "Powered by Dual-Brain architecture (Gemini + Local Ollama). "
+        "Equipped with GitHub, Gmail, Calendar, Browser, Google Docs, and Google Sheets integrations. "
+        "Type `/status` to view active integrations."
+    )
+
+    demo = gr.ChatInterface(
+        fn=respond,
+        title=f"{NAME} — Personal AI Executive",
+        description=description,
+    )
+    demo.launch(server_name="127.0.0.1", server_port=7860)
+
 
 if __name__ == "__main__":
-    demo.launch(server_name="127.0.0.1", server_port=7860)
+    main()

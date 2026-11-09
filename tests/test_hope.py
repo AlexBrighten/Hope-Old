@@ -155,6 +155,50 @@ class TestHopeInfrastructure(unittest.TestCase):
         valid, err = verify_github_signature(payload, None)
         self.assertFalse(valid)
 
+    def test_fastapi_web_endpoints(self):
+        """Test Hope FastAPI executive web app endpoints."""
+        from fastapi.testclient import TestClient
+        from app import app
+        client = TestClient(app)
+
+        # 1. Health & status endpoint
+        res = client.get("/api/status")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["status"], "online")
+        self.assertIn("integrations", data)
+        self.assertIn("pending_approvals_count", data)
+
+        # 2. Approvals listing
+        res = client.get("/api/approvals")
+        self.assertEqual(res.status_code, 200)
+        approvals_data = res.json()
+        self.assertIn("pending", approvals_data)
+        self.assertIn("recent", approvals_data)
+
+        # 3. Long-term memory endpoint
+        res = client.get("/api/memory")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("content", res.json())
+
+        # 4. PWA Web App Manifest
+        res = client.get("/manifest.json")
+        self.assertEqual(res.status_code, 200)
+        manifest = res.json()
+        self.assertIn("Hope", manifest["name"])
+        self.assertEqual(manifest["display"], "standalone")
+
+        # 5. Routing config toggle
+        res = client.post("/api/config/routing", json={"mode": "auto"})
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()["mode"], "auto")
+
+        # 6. Chat endpoint approval command recognition
+        res = client.post("/api/chat", json={"message": "/status"})
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("Status Report", res.json()["reply"])
+
+
 
 if __name__ == "__main__":
     unittest.main()
