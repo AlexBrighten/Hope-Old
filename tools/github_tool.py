@@ -10,17 +10,44 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from tools.approval import check_or_stage
 
 HERE = Path(__file__).resolve().parent.parent
 load_dotenv(HERE / ".env")
 
 _SETUP_MSG = (
-    "GitHub is not configured. To set up:\n"
-    "1. Go to https://github.com/settings/tokens and create a Personal Access Token\n"
-    "   (classic or fine-grained) with the scopes you need (repo, read:user, etc.).\n"
-    "2. Add  GITHUB_TOKEN=ghp_your_token_here  to your .env file at:\n"
-    f"   {HERE / '.env'}"
+    "GitHub is not configured. To set up securely:\n"
+    "1. Go to https://github.com/settings/tokens?type=beta (Fine-grained Personal Access Tokens).\n"
+    "2. Select ONLY the specific repositories Hope should access (avoid 'All repositories').\n"
+    "3. Set minimal permissions:\n"
+    "   • Contents: Read and write\n"
+    "   • Pull requests: Read and write\n"
+    "   • Issues: Read and write\n"
+    "4. Add  GITHUB_TOKEN=github_pat_your_token_here  to your .env file at:\n"
+    f"   {HERE / '.env'}\n"
+    "5. (Recommended) Set GITHUB_ALLOWED_REPOS=owner/repo in .env to enforce a repository allowlist."
 )
+
+ALLOWED_REPOS = [
+    r.strip().lower()
+    for r in os.environ.get("GITHUB_ALLOWED_REPOS", "").split(",")
+    if r.strip()
+]
+
+
+def _check_repo_allowed(full_repo_name: str) -> tuple[bool, str]:
+    """If GITHUB_ALLOWED_REPOS is set, ensure repo is in the whitelist."""
+    if not ALLOWED_REPOS:
+        return True, ""
+    normalized = full_repo_name.lower().strip()
+    for allowed in ALLOWED_REPOS:
+        if normalized == allowed or normalized.endswith(f"/{allowed}"):
+            return True, ""
+    return False, (
+        f"🛡️ Security Block: Repository '{full_repo_name}' is not in your GITHUB_ALLOWED_REPOS whitelist.\n"
+        f"Allowed repositories: {', '.join(ALLOWED_REPOS)}\n"
+        "To allow writes to this repository, update GITHUB_ALLOWED_REPOS in your .env file."
+    )
 
 
 def _get_github():
@@ -131,8 +158,9 @@ def github_create_or_update_file(
     content: str,
     commit_message: str,
     branch: str = "",
+    approval_token: str = "",
 ) -> str:
-    """Create or update a file in a GitHub repository.
+    """Create or update a file in a GitHub repository. Requires human approval.
 
     Args:
         repo_name: 'owner/repo' or just 'repo'.
@@ -140,9 +168,23 @@ def github_create_or_update_file(
         content: The full file content to write.
         commit_message: Commit message for the change.
         branch: Target branch. Defaults to the repo's default branch.
+        approval_token: Confirmation token from owner approval.
 
     Returns confirmation with the commit SHA.
     """
+    allowed, err = _check_repo_allowed(repo_name)
+    if not allowed:
+        return err
+
+    approved, msg = check_or_stage(
+        action_name="github_create_or_update_file",
+        params={"repo": repo_name, "path": file_path, "commit_message": commit_message},
+        summary=f"Commit file '{file_path}' to '{repo_name}' with message: '{commit_message}'",
+        approval_token=approval_token,
+    )
+    if not approved:
+        return msg
+
     try:
         g = _get_github()
         repo = _resolve_repo(g, repo_name)
@@ -211,18 +253,36 @@ def github_list_issues(
 
 
 def github_create_issue(
-    repo_name: str, title: str, body: str = "", labels: str = ""
+    repo_name: str,
+    title: str,
+    body: str = "",
+    labels: str = "",
+    approval_token: str = "",
 ) -> str:
-    """Create a new issue in a GitHub repository.
+    """Create a new issue in a GitHub repository. Requires human approval.
 
     Args:
         repo_name: 'owner/repo' or just 'repo'.
         title: Issue title.
         body: Issue body/description (optional).
         labels: Comma-separated label names (optional, e.g. 'bug,urgent').
+        approval_token: Confirmation token from owner approval.
 
     Returns confirmation with the issue number and URL.
     """
+    allowed, err = _check_repo_allowed(repo_name)
+    if not allowed:
+        return err
+
+    approved, msg = check_or_stage(
+        action_name="github_create_issue",
+        params={"repo": repo_name, "title": title},
+        summary=f"Open issue in '{repo_name}': '{title}'",
+        approval_token=approval_token,
+    )
+    if not approved:
+        return msg
+
     try:
         g = _get_github()
         repo = _resolve_repo(g, repo_name)
@@ -237,17 +297,34 @@ def github_create_issue(
 
 
 def github_comment_issue(
-    repo_name: str, issue_number: int, comment: str
+    repo_name: str,
+    issue_number: int,
+    comment: str,
+    approval_token: str = "",
 ) -> str:
-    """Add a comment to a GitHub issue or pull request.
+    """Add a comment to a GitHub issue or pull request. Requires human approval.
 
     Args:
         repo_name: 'owner/repo' or just 'repo'.
         issue_number: The issue or PR number.
         comment: Comment text.
+        approval_token: Confirmation token from owner approval.
 
     Returns confirmation with the comment URL.
     """
+    allowed, err = _check_repo_allowed(repo_name)
+    if not allowed:
+        return err
+
+    approved, msg = check_or_stage(
+        action_name="github_comment_issue",
+        params={"repo": repo_name, "issue_number": issue_number},
+        summary=f"Post comment on issue #{issue_number} in '{repo_name}'",
+        approval_token=approval_token,
+    )
+    if not approved:
+        return msg
+
     try:
         g = _get_github()
         repo = _resolve_repo(g, repo_name)
@@ -296,8 +373,9 @@ def github_create_pr(
     head: str,
     base: str = "main",
     body: str = "",
+    approval_token: str = "",
 ) -> str:
-    """Create a new pull request in a GitHub repository.
+    """Create a new pull request in a GitHub repository. Requires human approval.
 
     Args:
         repo_name: 'owner/repo' or just 'repo'.
@@ -305,9 +383,23 @@ def github_create_pr(
         head: Source branch name.
         base: Target branch name (default 'main').
         body: PR description (optional).
+        approval_token: Confirmation token from owner approval.
 
     Returns confirmation with the PR number and URL.
     """
+    allowed, err = _check_repo_allowed(repo_name)
+    if not allowed:
+        return err
+
+    approved, msg = check_or_stage(
+        action_name="github_create_pr",
+        params={"repo": repo_name, "title": title, "head": head, "base": base},
+        summary=f"Create PR in '{repo_name}': '{title}' ({head} -> {base})",
+        approval_token=approval_token,
+    )
+    if not approved:
+        return msg
+
     try:
         g = _get_github()
         repo = _resolve_repo(g, repo_name)

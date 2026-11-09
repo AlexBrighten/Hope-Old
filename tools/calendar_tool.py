@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
+from tools.approval import check_or_stage
 
 HERE = Path(__file__).resolve().parent.parent
 load_dotenv(HERE / ".env")
@@ -263,12 +264,22 @@ def calendar_update_event(
 # ── Delete Event ────────────────────────────────────────────────────────
 
 
-def calendar_delete_event(event_id: str) -> str:
-    """Delete/cancel a Google Calendar event by its ID.
+def calendar_delete_event(event_id: str, approval_token: str = "") -> str:
+    """Delete/cancel a Google Calendar event by its ID. Requires human approval.
 
     Args:
         event_id: The event ID (from calendar_list_events).
+        approval_token: Confirmation token from owner approval.
     """
+    approved, msg = check_or_stage(
+        action_name="calendar_delete_event",
+        params={"event_id": event_id},
+        summary=f"Delete/cancel calendar event ID '{event_id}'",
+        approval_token=approval_token,
+    )
+    if not approved:
+        return msg
+
     err = _require_write_access()
     if err:
         return err

@@ -12,5 +12,7 @@
   ],
   "ollama_url": "http://localhost:11434",
   "routing_mode": "auto",
-  "enable_background_memory": true
+  "enable_background_memory": true,
+  "email_draft_only": true,
+  "require_approval": true
 }

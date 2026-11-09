@@ -26,6 +26,7 @@ Hope operates over **43 FastMCP tools** connecting directly to your everyday pro
 - [🛠️ Tool Suite Reference (43 Tools)](#️-tool-suite-reference-43-tools)
 - [🧠 Dual-Brain Routing & Modes](#-dual-brain-routing--modes)
 - [📱 Running User Interfaces](#-running-user-interfaces)
+- [🛡️ Security & Human-in-the-Loop Safeguards](#️-security--human-in-the-loop-safeguards)
 - [🧪 Testing & Diagnostics](#-testing--diagnostics)
 - [📂 Project Directory Structure](#-project-directory-structure)
 - [❓ Troubleshooting & FAQ](#-troubleshooting--faq)
@@ -146,12 +147,18 @@ Hope automatically detects installed models via `GET http://localhost:11434/api/
 
 ---
 
-### 3. GitHub Integration
-1. Go to [GitHub Settings → Developer Settings → Personal Access Tokens](https://github.com/settings/tokens).
-2. Generate a token with scopes: `repo`, `read:user`, `workflow`.
-3. Add to `.env`:
+### 3. GitHub Integration (Security: Fine-Grained Token)
+1. Go to [GitHub Settings → Personal Access Tokens → Fine-grained tokens](https://github.com/settings/tokens?type=beta).
+2. **Repository access**: Select **Only select repositories** (choose only the specific repositories Hope needs). *Do NOT use 'All repositories' or broad classic tokens.*
+3. **Permissions**: Grant minimal permissions:
+   - `Contents`: Read and write
+   - `Pull requests`: Read and write
+   - `Issues`: Read and write
+4. Add to `.env`:
    ```env
-   GITHUB_TOKEN=ghp_your_token_here
+   GITHUB_TOKEN=github_pat_your_fine_grained_token_here
+   # (Optional) Enforce repository allowlist for all write tools:
+   GITHUB_ALLOWED_REPOS=owner/repo1,owner/repo2
    ```
 
 ---
@@ -320,11 +327,53 @@ python briefing.py
 ```
 Scans your upcoming calendar schedule, searches for high-priority unread emails, checks reminders, prints the summary, and sends it to your email.
 
-### 4. Webhook Receiver
+### 4. Webhook Receiver (Localhost 127.0.0.1)
 ```bash
 python hooks_server.py
 ```
-Starts an HTTP listener on port 8000 for incoming GitHub pushes or custom automations.
+Starts a secure HTTP listener strictly bound to `127.0.0.1:8000` with GitHub HMAC signature verification.
+
+---
+
+## 🛡️ Security & Human-in-the-Loop Safeguards
+
+Hope includes strict safety boundaries to protect your credentials, repositories, and communications:
+
+### 1. Email Draft-Only Mode (`EMAIL_DRAFT_ONLY=true`)
+- By default, Hope creates drafts in your Gmail account (`gmail_create_draft`) rather than sending emails directly.
+- Emails will never be sent to external recipients without your explicit confirmation.
+
+### 2. Human Approval Gate for Mutating Actions (`REQUIRE_APPROVAL=true`)
+- Any high-impact mutating operation:
+  - `gmail_send_email` / `gmail_reply_email`
+  - `github_create_or_update_file`
+  - `github_create_pr`
+  - `github_create_issue` / `github_comment_issue`
+  - `calendar_delete_event`
+- Hope generates a unique action ID (e.g. `act-1a2b`) and sends an urgent notification to your verified Telegram:
+  ```text
+  🚨 Action Approval Required
+  • Action: github_create_pr
+  • Details: Create PR in 'AlexBrighten/Hope': 'Add safety gates' (feature -> main)
+  Reply with 'yes act-1a2b' to approve, or 'no act-1a2b' to reject.
+  ```
+- Simply text `yes` or `no` in Telegram (or in the Gradio chat) to approve or reject the action.
+
+### 3. Fine-Grained GitHub Tokens & Repository Allowlist
+- Hope recommends and requires **Fine-Grained Personal Access Tokens** scoped to specific repositories only.
+- Set `GITHUB_ALLOWED_REPOS=owner/repo1,owner/repo2` in `.env` to enforce a hard whitelist against any unauthorized repository writes.
+
+### 4. Localhost-Only Webhook Receiver with HMAC Verification
+- `hooks_server.py` binds strictly to `127.0.0.1` (never exposed to `0.0.0.0`).
+- Every incoming GitHub webhook is verified using HMAC-SHA256 (`X-Hub-Signature-256`) against your `GITHUB_WEBHOOK_SECRET`. Unsigned or tampered requests are immediately rejected with `401 Unauthorized`.
+
+### 5. Telegram Chat ID Lock
+- `telegram_bot.py` strictly checks `str(chat_id) == str(TELEGRAM_CHAT_ID)`.
+- Messages, edits, or commands from any unauthorized chat ID are logged as security alerts and instantly dropped.
+
+### 6. Strict Credential & Cache Ignore Rules
+- `.gitignore` strictly covers: `.env`, `credentials.json`, `token.json`, `workspace/`, `venv/`, `.venv/`, and `node_modules/`.
+- `token.json` holds OAuth tokens granting access to your Gmail and Google Drive — it is never committed or pushed to Git.
 
 ---
 

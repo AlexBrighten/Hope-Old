@@ -115,6 +115,46 @@ class TestHopeInfrastructure(unittest.TestCase):
         res = gsheets_read_range("sample_id", "A1:B2")
         self.assertTrue("Google OAuth is not configured" in res or "Error" in res or "Range" in res)
 
+    def test_approval_gate(self):
+        """Test staging and approving mutating actions."""
+        from tools.approval import stage_action, approve_action, reject_action, get_action_status
+        act = stage_action("test_action", {"key": "val"}, "Test summary")
+        self.assertEqual(get_action_status(act.action_id), "pending")
+
+        # Approve
+        ok, msg = approve_action(act.action_id)
+        self.assertTrue(ok)
+        self.assertEqual(get_action_status(act.action_id), "approved")
+
+        # Reject another
+        act2 = stage_action("test_action2", {}, "Test summary 2")
+        ok2, msg2 = reject_action(act2.action_id)
+        self.assertTrue(ok2)
+        self.assertEqual(get_action_status(act2.action_id), "rejected")
+
+    def test_github_webhook_hmac(self):
+        """Test GitHub HMAC-SHA256 signature verification."""
+        import hmac, hashlib
+        from hooks_server import verify_github_signature
+        import hooks_server
+
+        # Test with configured secret
+        hooks_server.GITHUB_WEBHOOK_SECRET = "secret123"
+        payload = b'{"action":"opened"}'
+        expected_sig = "sha256=" + hmac.new(b"secret123", payload, hashlib.sha256).hexdigest()
+
+        # Valid signature
+        valid, err = verify_github_signature(payload, expected_sig)
+        self.assertTrue(valid)
+
+        # Invalid / tampered payload
+        valid, err = verify_github_signature(b'{"tampered":true}', expected_sig)
+        self.assertFalse(valid)
+
+        # Missing signature
+        valid, err = verify_github_signature(payload, None)
+        self.assertFalse(valid)
+
 
 if __name__ == "__main__":
     unittest.main()

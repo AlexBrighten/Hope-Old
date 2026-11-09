@@ -19,6 +19,7 @@ from email.mime.text import MIMEText
 from pathlib import Path
 
 from dotenv import load_dotenv
+from tools.approval import EMAIL_DRAFT_ONLY, check_or_stage
 
 HERE = Path(__file__).resolve().parent.parent
 load_dotenv(HERE / ".env")
@@ -253,11 +254,34 @@ def gmail_read_message(message_id: str) -> str:
 
 # ── 3. Send email ──────────────────────────────────────────────────────
 
-def gmail_send_email(to: str, subject: str, body: str) -> str:
+def gmail_send_email(to: str, subject: str, body: str, approval_token: str = "") -> str:
     """Compose and send an email to any recipient.
 
-    Uses Gmail API when OAuth is available, otherwise SMTP with app password.
+    If EMAIL_DRAFT_ONLY is True (default), it safely creates a draft in Gmail
+    for manual review instead of sending directly. If draft-only is False,
+    it requires human approval via Telegram/chat before transmitting.
     """
+    if EMAIL_DRAFT_ONLY:
+        draft_res = gmail_create_draft(to, subject, body)
+        return (
+            f"🛡️ [Draft-Only Mode Active]\n"
+            f"Email was NOT sent directly to avoid accidental transmission.\n"
+            f"Saved as a DRAFT in your Gmail for your manual review:\n"
+            f"• To: {to}\n"
+            f"• Subject: {subject}\n"
+            f"• Status: {draft_res}"
+        )
+
+    # Require explicit human approval before sending
+    approved, msg = check_or_stage(
+        action_name="gmail_send_email",
+        params={"to": to, "subject": subject},
+        summary=f"Send email to '{to}' with subject '{subject}'",
+        approval_token=approval_token,
+    )
+    if not approved:
+        return msg
+
     # --- OAuth path ---
     service = _get_gmail_service()
     if service:
@@ -297,12 +321,20 @@ def gmail_send_email(to: str, subject: str, body: str) -> str:
 
 # ── 4. Reply to email ──────────────────────────────────────────────────
 
-def gmail_reply_email(message_id: str, body: str) -> str:
+def gmail_reply_email(message_id: str, body: str, approval_token: str = "") -> str:
     """Send a threaded reply to an existing email (preserves thread, adds Re: prefix).
 
-    Only supported via Gmail API (OAuth). Falls back to a plain send via SMTP
-    with the original subject prefixed with 'Re:'.
+    Requires explicit human approval before transmitting.
     """
+    approved, msg = check_or_stage(
+        action_name="gmail_reply_email",
+        params={"message_id": message_id},
+        summary=f"Send threaded reply to email ID '{message_id}'",
+        approval_token=approval_token,
+    )
+    if not approved:
+        return msg
+
     # --- OAuth path ---
     service = _get_gmail_service()
     if service:

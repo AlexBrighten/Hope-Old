@@ -8,6 +8,9 @@ import gradio as gr
 
 from mcp_agent import NAME, OWNER, MCPAgent
 
+import re
+from tools.approval import approve_action, reject_action, _pending, _load_pending
+
 agent = MCPAgent()
 status = agent.status()
 
@@ -20,7 +23,10 @@ print("════════════════════════�
 
 
 def respond(message: str, history: list):
-    if message.strip().lower() == "/status":
+    clean = message.strip()
+    lower = clean.lower()
+
+    if lower == "/status":
         s = agent.status()
         out = (
             f"### {s['agent_name']} Status Report\n"
@@ -37,6 +43,32 @@ def respond(message: str, history: list):
             f"- Browser (Puppeteer): {'🟢 Ready' if s['integrations']['puppeteer'] else '⚪ Not installed'}\n"
         )
         return out
+
+    # Handle human approval ("yes" / "no")
+    if re.match(r"^(yes|approve|confirm)(\s+act-[a-f0-9]+)?$", lower):
+        match = re.search(r"act-[a-f0-9]+", lower)
+        target_id = match.group(0) if match else None
+        success, reply_msg = approve_action(target_id)
+        emoji = "✅" if success else "⚠️"
+        return f"{emoji} {reply_msg}\n\nYou can now tell Hope to proceed with executing the action."
+
+    if re.match(r"^(no|reject|cancel)(\s+act-[a-f0-9]+)?$", lower):
+        match = re.search(r"act-[a-f0-9]+", lower)
+        target_id = match.group(0) if match else None
+        success, reply_msg = reject_action(target_id)
+        return f"🛑 {reply_msg}"
+
+    if lower in ("/pending", "/actions"):
+        _load_pending()
+        pending_items = [v for v in _pending.values() if v.status == "pending"]
+        if not pending_items:
+            return "ℹ️ No pending actions awaiting approval."
+        lines = ["### Pending Actions Awaiting Approval:"]
+        for p in pending_items:
+            lines.append(f"- **`{p.action_id}`**: `{p.action_name}` — {p.summary}")
+        lines.append("\nType `yes <action_id>` to approve or `no <action_id>` to reject.")
+        return "\n".join(lines)
+
     return agent.ask(message)
 
 
