@@ -72,6 +72,29 @@ def today_note() -> str:
     )
 
 
+def recent_thread_context(current_text: str = "", limit: int = 12) -> str:
+    """Return a compact shared transcript for follow-up messages."""
+    f = HERE / "workspace" / "chat_history.json"
+    if not f.exists():
+        return ""
+    try:
+        messages = json.loads(f.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+
+    lines = []
+    for msg in messages[-limit:]:
+        role = "Owner" if msg.get("role") == "user" else "Hope"
+        content = str(msg.get("content", "")).strip()
+        if not content:
+            continue
+        # The API records the current user message before calling ask().
+        if content == current_text.strip() and msg is messages[-1]:
+            continue
+        lines.append(f"{role}: {content[:1200]}")
+    return "\n".join(lines)
+
+
 class MCPAgent:
     """Runs server.py as an MCP server and coordinates Dual-Brain execution."""
 
@@ -186,7 +209,11 @@ class MCPAgent:
         user = types.Content(role="user", parts=[types.Part(text=text)])
         contents = self.history + [user]
         config = types.GenerateContentConfig(
-            system_instruction=SYSTEM + today_note() + current_memory(),
+            system_instruction=(
+                SYSTEM + today_note() + current_memory()
+                + "\n\nRecent conversation context:\n"
+                + recent_thread_context(text)
+            ),
             tools=[types.Tool(function_declarations=self.decls)],
             automatic_function_calling=types.AutomaticFunctionCallingConfig(
                 disable=True
@@ -243,12 +270,15 @@ class MCPAgent:
         mode = CFG.get("routing_mode", "auto")
         route = route_query(text, mode=mode)
         clean_text = strip_routing_prefix(text)
+        context = recent_thread_context(clean_text)
 
         reply = ""
         # ── Route: Local Brain (Ollama) ─────────────────────────────────
         if route == "local":
             if self.local_brain.is_available():
-                reply = self.local_brain.chat(clean_text, owner=OWNER)
+                reply = self.local_brain.chat(
+                    clean_text, owner=OWNER, conversation_context=context
+                )
                 # If local model succeeded, return directly
                 if not reply.startswith("[local-brain-error]"):
                     threading.Thread(
@@ -265,7 +295,9 @@ class MCPAgent:
             # Cloud brain not ready, try local brain
             if self.local_brain.is_available():
                 reply = f"(Gemini unconfigured. Answering with local {self.local_brain.active_model})\n\n"
-                reply += self.local_brain.chat(clean_text, owner=OWNER)
+                reply += self.local_brain.chat(
+                    clean_text, owner=OWNER, conversation_context=context
+                )
                 return reply
             return f"Agent not ready: {self.error or 'GEMINI_API_KEY is missing in .env and Ollama is not running'}"
 

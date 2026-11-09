@@ -139,19 +139,29 @@ class LocalBrain:
         return f"Saved {len(lines)} new memory note(s)."
 
     # ── quick chat ──────────────────────────────────────────────────────
-    def chat(self, user_prompt: str, owner: str = "Alex") -> str:
+    def chat(
+        self,
+        user_prompt: str,
+        owner: str = "Alex",
+        conversation_context: str = "",
+    ) -> str:
         """Handle a lightweight chat query entirely locally."""
         system = (
             f"You are Hope, a friendly personal AI assistant for {owner}. "
-            "Answer concisely and helpfully. If you don't know something, "
-            "say so honestly."
+            "Answer concisely and helpfully. Use the recent conversation context "
+            "to resolve follow-up messages such as 'yes', 'okay', or 'send it'. "
+            "If you don't know something, say so honestly."
         )
         # Include recent memory for context
         memory = ""
         if MEMORY_FILE.exists():
             memory = "\n\nSaved notes about the owner:\n" + \
                      MEMORY_FILE.read_text(encoding="utf-8")[-2000:]
-        return self.generate(user_prompt, system=system + memory,
+        context = (
+            f"\n\nRecent conversation context:\n{conversation_context}"
+            if conversation_context else ""
+        )
+        return self.generate(user_prompt, system=system + memory + context,
                              max_tokens=512, temperature=0.5)
 
     # ── health check ────────────────────────────────────────────────────
@@ -162,4 +172,3 @@ class LocalBrain:
             return resp.status_code == 200
         except Exception:
             return False
-
