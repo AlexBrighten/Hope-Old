@@ -73,7 +73,6 @@ def main():
                     f"• GitHub: {'🟢 Active' if s['integrations']['github'] else '⚪ Disabled'}\n"
                     f"• Gmail: {'🟢 Active' if s['integrations']['gmail'] else '⚪ Disabled'}\n"
                     f"• Calendar: {'🟢 Active' if s['integrations']['calendar'] else '⚪ Disabled'}\n"
-                    f"• Notion: {'🟢 Active' if s['integrations']['notion'] else '⚪ Disabled'}\n"
                     f"• Google Docs: {'🟢 Active' if s['integrations']['gdocs'] else '⚪ Disabled'}\n"
                     f"• Puppeteer: {'🟢 Active' if s['integrations']['puppeteer'] else '⚪ Disabled'}"
                 )
@@ -84,7 +83,7 @@ def main():
             if text.lower() == "/help":
                 reply = (
                     f"Commands for {NAME}:\n"
-                    f"• Send any natural message to execute tasks across GitHub, Gmail, Calendar, Browser, Notion, Docs.\n"
+                    f"• Send any natural message to execute tasks across GitHub, Gmail, Calendar, Browser, Docs.\n"
                     f"• `/status` — View connectivity and active brains\n"
                     f"• `/local <text>` — Force local Ollama execution (offline)\n"
                     f"• `/gemini <text>` — Force Gemini cloud execution\n"

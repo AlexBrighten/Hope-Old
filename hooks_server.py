@@ -73,9 +73,6 @@ class WebhookHTTPHandler(BaseHTTPRequestHandler):
             event_type = self.headers.get("X-GitHub-Event", "unknown")
             _log_event("github", event_type, payload)
             self._send_json(200, {"received": True, "event": event_type})
-        elif self.path.startswith("/webhook/notion"):
-            _log_event("notion", "notification", payload)
-            self._send_json(200, {"received": True})
         elif self.path.startswith("/webhook/custom/"):
             source = self.path.split("/webhook/custom/")[-1]
             _log_event(source, "custom", payload)
@@ -110,15 +107,6 @@ def run_server():
                 payload = {"raw": (await request.body()).decode()[:500]}
             _log_event("github", event_type, payload)
             return {"received": True, "event": event_type}
-
-        @app.post("/webhook/notion")
-        async def notion_webhook(request: Request):
-            try:
-                payload = await request.json()
-            except Exception:
-                payload = {"raw": (await request.body()).decode()[:500]}
-            _log_event("notion", "notification", payload)
-            return {"received": True}
 
         @app.post("/webhook/custom/{source}")
         async def custom_webhook(source: str, request: Request):

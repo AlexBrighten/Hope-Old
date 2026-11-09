@@ -4,7 +4,7 @@
 - ☁️ **Primary Cloud Brain**: Google Gemini 2.5/3.5 (for deep reasoning, code generation, and multi-step tool execution).
 - 🧠 **Secondary Local Brain**: Local Ollama model (**`llama3.2:3b`**, **`phi3.5`**, or **`qwen2.5:3b`**) optimized for edge hardware (Intel Core i7-6600U, 8 GB RAM on Debian) for smart query routing, privacy-first local tasks, content distillation, and 100% offline fallback.
 
-Hope operates over **43 FastMCP tools** connecting directly to your everyday productivity stack: **GitHub**, **Gmail**, **Google Calendar**, **Browser Automation (Puppeteer & API Hooks)**, **Notion**, and **Google Docs**.
+Hope operates over **37 FastMCP tools** connecting directly to your everyday productivity stack: **GitHub**, **Gmail**, **Google Calendar**, **Browser Automation (Puppeteer & API Hooks)**, and **Google Docs**.
 
 ---
 
@@ -21,10 +21,9 @@ Hope operates over **43 FastMCP tools** connecting directly to your everyday pro
   - [3. GitHub Integration](#3-github-integration)
   - [4. Google Ecosystem (Unified OAuth for Gmail, Calendar, Docs)](#4-google-ecosystem-unified-oauth)
   - [5. Gmail App Password Fallback (IMAP/SMTP)](#5-gmail-app-password-fallback-imapsmtp)
-  - [6. Notion Integration](#6-notion-integration)
-  - [7. Browser Automation (Puppeteer)](#7-browser-automation-puppeteer)
-  - [8. Telegram Mobile Interface](#8-telegram-mobile-interface)
-- [🛠️ Tool Suite Reference (43 Tools)](#️-tool-suite-reference-43-tools)
+  - [6. Browser Automation (Puppeteer)](#6-browser-automation-puppeteer)
+  - [7. Telegram Mobile Interface](#7-telegram-mobile-interface)
+- [🛠️ Tool Suite Reference (37 Tools)](#️-tool-suite-reference-37-tools)
 - [🧠 Dual-Brain Routing & Modes](#-dual-brain-routing--modes)
 - [📱 Running User Interfaces](#-running-user-interfaces)
 - [🧪 Testing & Diagnostics](#-testing--diagnostics)
@@ -41,10 +40,9 @@ Hope operates over **43 FastMCP tools** connecting directly to your everyday pro
 | **✉️ Gmail** | Search unread emails, read threads (decoded clean text), send messages to anyone, draft threaded replies, and save Gmail drafts. |
 | **📅 Google Calendar** | Inspect daily schedule, schedule meetings with attendees/location, reschedule/update events, delete events, and natural language `quickAdd`. |
 | **🌐 Browser Automation** | Full headless or visible Puppeteer web navigation, visual screenshots, interactive form filling (click, type, wait), PDF export, and network API JSON interception. |
-| **📝 Notion** | Search workspace pages and databases, parse blocks into clean markdown, create new subpages, append sections/notes, and query/create database items. |
 | **📄 Google Docs** | Search docs in Google Drive, extract structured document content, create new documents, and append formatted sections. |
 | **🧠 Second Brain (Ollama)** | Intent classification, local fast replies with **0 API tokens**, email/page summarization before sending to Gemini, and autonomous memory archiving to `memory.md`. |
-| **🪝 Inbound Webhook Server** | Standalone webhook listener on port 8000 handling GitHub push/PR events, Notion notifications, or custom webhooks to trigger Hope. |
+| **🪝 Inbound Webhook Server** | Standalone webhook listener on port 8000 handling GitHub push/PR events or custom webhooks to trigger Hope. |
 
 ---
 
@@ -60,14 +58,13 @@ flowchart TD
         LocalBrain <-->|Memory Digest / Distilled Context| CloudBrain
     end
 
-    subgraph FastMCP Tool Suite [43 Registered Tools]
+    subgraph FastMCP Tool Suite [37 Registered Tools]
         CloudBrain <--> MCP[server.py: FastMCP Server]
         MCP --> Core[tools/core.py: 9 Tools]
         MCP --> GH[tools/github_tool.py: 10 Tools]
         MCP --> GM[tools/gmail_tool.py: 5 Tools]
         MCP --> GC[tools/calendar_tool.py: 5 Tools]
         MCP --> GD[tools/gdocs_tool.py: 4 Tools]
-        MCP --> NT[tools/notion_tool.py: 6 Tools]
         MCP --> BR[tools/browser_tool.py: 4 Tools]
     end
 
@@ -76,7 +73,6 @@ flowchart TD
         BR <--> WebhookServer[hooks_server.py: Port 8000 Server]
         GM & GC & GD <--> GoogleAuth[tools/google_auth.py: OAuth 2.0 Unified Session]
         GH <--> GitHubAPI[(GitHub REST API)]
-        NT <--> NotionAPI[(Notion REST API)]
     end
 ```
 
@@ -188,18 +184,7 @@ If you prefer not to set up Google Cloud OAuth:
 
 ---
 
-### 6. Notion Integration
-1. Visit [Notion Integrations](https://www.notion.so/my-integrations) and click **New integration**.
-2. Name it `Hope` and copy the **Internal Integration Secret**.
-3. Add to `.env`:
-   ```env
-   NOTION_API_KEY=secret_your_token_here
-   ```
-4. In your Notion workspace, open the pages or databases you want Hope to access, click the `...` menu in the top right, select **Connect to**, and choose `Hope`.
-
----
-
-### 7. Browser Automation (Puppeteer)
+### 6. Browser Automation (Puppeteer)
 Puppeteer is pre-configured in `package.json`.
 1. Install dependencies:
    ```bash
@@ -215,7 +200,7 @@ Puppeteer is pre-configured in `package.json`.
 
 ---
 
-### 8. Telegram Mobile Interface
+### 7. Telegram Mobile Interface
 1. Open Telegram and search for `@BotFather`.
 2. Send `/newbot` to create your bot and copy the bot token.
 3. Add to `.env`:
@@ -237,7 +222,7 @@ Puppeteer is pre-configured in `package.json`.
 
 ---
 
-## 🛠️ Tool Suite Reference (43 Tools)
+## 🛠️ Tool Suite Reference (37 Tools)
 
 ### 🐙 GitHub Tools (`tools/github_tool.py`)
 - `github_list_repos(visibility="all", limit=10)` — Lists your repositories with stars and descriptions.
@@ -270,14 +255,6 @@ Puppeteer is pre-configured in `package.json`.
 - `browser_take_screenshot(url, filename="screenshot.png")` — Captures webpage screenshots to workspace.
 - `browser_interact(url, steps_json)` — Executes click, type, wait, and extract sequences.
 - `browser_capture_api(url, api_keyword)` — Intercepts and captures live JSON API requests.
-
-### 📝 Notion Tools (`tools/notion_tool.py`)
-- `notion_search(query="", filter_type="")` — Searches pages or databases.
-- `notion_read_page(page_id)` — Reads full page blocks converted to Markdown.
-- `notion_create_page(parent_page_id, title, content_markdown="")` — Creates a new page.
-- `notion_append_to_page(page_id, content_markdown)` — Appends markdown blocks to an existing page.
-- `notion_query_database(database_id, filter_json="", limit=10)` — Queries database rows.
-- `notion_create_database_item(database_id, title, properties_json="")` — Adds items to a Notion database.
 
 ### 📄 Google Docs Tools (`tools/gdocs_tool.py`)
 - `gdocs_create_document(title, initial_content="")` — Creates a new Google Doc and returns its URL.
@@ -336,7 +313,7 @@ Scans your upcoming calendar schedule, searches for high-priority unread emails,
 ```bash
 python hooks_server.py
 ```
-Starts an HTTP listener on port 8000 for incoming GitHub pushes, Notion page events, or Zapier/Make automations.
+Starts an HTTP listener on port 8000 for incoming GitHub pushes or custom automations.
 
 ---
 
@@ -380,7 +357,6 @@ Hope/
 │   ├── gmail_tool.py            # Gmail read/write (5 tools)
 │   ├── calendar_tool.py         # Google Calendar create/edit (5 tools)
 │   ├── browser_tool.py          # Puppeteer wrapper (4 tools)
-│   ├── notion_tool.py           # Notion API integration (6 tools)
 │   ├── gdocs_tool.py            # Google Docs & Drive (4 tools)
 │   └── google_auth.py           # Unified Google OAuth 2.0 helper
 │

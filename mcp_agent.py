@@ -37,7 +37,6 @@ SYSTEM = (
     "• Gmail: search/read email messages, send emails, draft replies, create drafts\n"
     "• Google Calendar: view upcoming events, create meetings, update/reschedule, delete, quickAdd\n"
     "• Browser Automation: headless/headful Puppeteer navigation, screenshots, form interaction, API hooks\n"
-    "• Notion: search pages/databases, read page blocks as markdown, create pages, append notes, query databases\n"
     "• Google Docs: search documents in Drive, read doc text, create documents, append content\n"
     "• Core & Memory: search web, fetch pages, workspace file CRUD, remember/recall long-term notes\n\n"
     "Your saved notes about the owner are included below, so you don't need to call recall().\n"
@@ -145,7 +144,6 @@ class MCPAgent:
                 "github": bool(os.environ.get("GITHUB_TOKEN")),
                 "gmail": bool(os.environ.get("GMAIL_ADDRESS") or (HERE / "token.json").exists() or (HERE / "credentials.json").exists()),
                 "calendar": bool(os.environ.get("CALENDAR_ICAL_URL") or (HERE / "token.json").exists() or (HERE / "credentials.json").exists()),
-                "notion": bool(os.environ.get("NOTION_API_KEY")),
                 "gdocs": bool((HERE / "token.json").exists() or (HERE / "credentials.json").exists()),
                 "puppeteer": (HERE / "puppeteer_runner.js").exists(),
             }

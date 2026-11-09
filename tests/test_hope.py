@@ -14,7 +14,7 @@ class TestHopeInfrastructure(unittest.TestCase):
     def test_tools_count(self):
         """Verify all modular tools are registered in ALL_TOOLS."""
         import tools
-        self.assertGreaterEqual(len(tools.ALL_TOOLS), 40)
+        self.assertGreaterEqual(len(tools.ALL_TOOLS), 35)
         tool_names = [fn.__name__ for fn in tools.ALL_TOOLS]
 
         # Verify Core tools
@@ -39,11 +39,6 @@ class TestHopeInfrastructure(unittest.TestCase):
         self.assertIn("calendar_list_events", tool_names)
         self.assertIn("calendar_create_event", tool_names)
         self.assertIn("calendar_update_event", tool_names)
-
-        # Verify Notion tools
-        self.assertIn("notion_search", tool_names)
-        self.assertIn("notion_read_page", tool_names)
-        self.assertIn("notion_create_page", tool_names)
 
         # Verify Google Docs tools
         self.assertIn("gdocs_create_document", tool_names)
@@ -101,12 +96,6 @@ class TestHopeInfrastructure(unittest.TestCase):
         from tools.calendar_tool import calendar_list_events
         res = calendar_list_events()
         self.assertTrue("Google Calendar is not configured" in res or "Events" in res or "No events" in res)
-
-    def test_notion_graceful_unconfigured(self):
-        """Notion functions should return helpful setup instructions when unconfigured."""
-        from tools.notion_tool import notion_search
-        res = notion_search("test")
-        self.assertTrue("NOTION_API_KEY is not set" in res or "Notion" in res)
 
     def test_gdocs_graceful_unconfigured(self):
         """Google Docs functions should return helpful instructions when unconfigured."""

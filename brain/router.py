@@ -19,7 +19,6 @@ _CLOUD_KEYWORDS = re.compile(
     r"\b(github|repo|commit|pull request|pr|issue|merge|branch|"
     r"email|gmail|inbox|send mail|draft|reply mail|"
     r"calendar|schedule|meeting|event|reschedule|"
-    r"notion|database|page|workspace|"
     r"google doc|gdoc|document|"
     r"browse|screenshot|puppeteer|scrape|navigate|"
     r"search the web|look up|fetch|"

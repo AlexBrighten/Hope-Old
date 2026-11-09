@@ -41,13 +41,6 @@ from tools.gdocs_tool import (
     gdocs_append_text, gdocs_search_documents,
 )
 
-from tools.notion_tool import ALL as NOTION_TOOLS
-from tools.notion_tool import (
-    notion_search, notion_read_page,
-    notion_create_page, notion_append_to_page,
-    notion_query_database, notion_create_database_item,
-)
-
 from tools.browser_tool import ALL as BROWSER_TOOLS
 from tools.browser_tool import (
     browser_open_and_read, browser_take_screenshot,
@@ -66,10 +59,8 @@ ALL_TOOLS = (
     + GMAIL_TOOLS
     + CALENDAR_TOOLS
     + GDOCS_TOOLS
-    + NOTION_TOOLS
     + BROWSER_TOOLS
 )
 
 # Alias for server.py and backward compatibility
 ALL = ALL_TOOLS
-
