@@ -1,1 +1,432 @@
-# Hope
+# 🌟 Hope — Autonomous Personal Executive AI Agent
+
+**Hope** is an autonomous personal executive AI agent built on a **Dual-Brain Architecture**:
+- ☁️ **Primary Cloud Brain**: Google Gemini 2.5/3.5 (for deep reasoning, code generation, and multi-step tool execution).
+- 🧠 **Secondary Local Brain**: Local Ollama model (**`llama3.2:3b`**, **`phi3.5`**, or **`qwen2.5:3b`**) optimized for edge hardware (Intel Core i7-6600U, 8 GB RAM on Debian) for smart query routing, privacy-first local tasks, content distillation, and 100% offline fallback.
+
+Hope operates over **43 FastMCP tools** connecting directly to your everyday productivity stack: **GitHub**, **Gmail**, **Google Calendar**, **Browser Automation (Puppeteer & API Hooks)**, **Notion**, and **Google Docs**.
+
+---
+
+## 📑 Table of Contents
+
+- [⚡ Core Superpowers](#-core-superpowers)
+- [🏗️ Dual-Brain Architecture](#️-dual-brain-architecture)
+- [🚀 Quick Start](#-quick-start)
+  - [On Debian Linux (Laptop)](#on-debian-linux-laptop--intel-core-i7-6600u--8-gb-ram)
+  - [On Windows](#on-windows)
+- [🔑 Step-by-Step Integration Setup](#-step-by-step-integration-setup)
+  - [1. Gemini Brain](#1-gemini-brain)
+  - [2. Local Brain (Ollama)](#2-local-brain-ollama)
+  - [3. GitHub Integration](#3-github-integration)
+  - [4. Google Ecosystem (Unified OAuth for Gmail, Calendar, Docs)](#4-google-ecosystem-unified-oauth)
+  - [5. Gmail App Password Fallback (IMAP/SMTP)](#5-gmail-app-password-fallback-imapsmtp)
+  - [6. Notion Integration](#6-notion-integration)
+  - [7. Browser Automation (Puppeteer)](#7-browser-automation-puppeteer)
+  - [8. Telegram Mobile Interface](#8-telegram-mobile-interface)
+- [🛠️ Tool Suite Reference (43 Tools)](#️-tool-suite-reference-43-tools)
+- [🧠 Dual-Brain Routing & Modes](#-dual-brain-routing--modes)
+- [📱 Running User Interfaces](#-running-user-interfaces)
+- [🧪 Testing & Diagnostics](#-testing--diagnostics)
+- [📂 Project Directory Structure](#-project-directory-structure)
+- [❓ Troubleshooting & FAQ](#-troubleshooting--faq)
+
+---
+
+## ⚡ Core Superpowers
+
+| Service | What Hope Can Do |
+| :--- | :--- |
+| **🐙 GitHub** | Search code across repos, list & inspect repositories, read/commit files directly, list/create issues, post comments, and manage pull requests. |
+| **✉️ Gmail** | Search unread emails, read threads (decoded clean text), send messages to anyone, draft threaded replies, and save Gmail drafts. |
+| **📅 Google Calendar** | Inspect daily schedule, schedule meetings with attendees/location, reschedule/update events, delete events, and natural language `quickAdd`. |
+| **🌐 Browser Automation** | Full headless or visible Puppeteer web navigation, visual screenshots, interactive form filling (click, type, wait), PDF export, and network API JSON interception. |
+| **📝 Notion** | Search workspace pages and databases, parse blocks into clean markdown, create new subpages, append sections/notes, and query/create database items. |
+| **📄 Google Docs** | Search docs in Google Drive, extract structured document content, create new documents, and append formatted sections. |
+| **🧠 Second Brain (Ollama)** | Intent classification, local fast replies with **0 API tokens**, email/page summarization before sending to Gemini, and autonomous memory archiving to `memory.md`. |
+| **🪝 Inbound Webhook Server** | Standalone webhook listener on port 8000 handling GitHub push/PR events, Notion notifications, or custom webhooks to trigger Hope. |
+
+---
+
+## 🏗️ Dual-Brain Architecture
+
+```mermaid
+flowchart TD
+    User([User / Telegram / Web UI / Webhook]) --> Router[brain/router.py: Smart Router]
+    
+    subgraph Brain Layer
+        Router -->|Casual Chat / Triage / Offline| LocalBrain[Local Brain: Ollama 3B-4B<br/>llama3.2:3b / phi3.5 / qwen2.5]
+        Router -->|Multi-tool / Heavy Reasoning / Code| CloudBrain[Cloud Brain: Gemini 2.5/3.5]
+        LocalBrain <-->|Memory Digest / Distilled Context| CloudBrain
+    end
+
+    subgraph FastMCP Tool Suite [43 Registered Tools]
+        CloudBrain <--> MCP[server.py: FastMCP Server]
+        MCP --> Core[tools/core.py: 9 Tools]
+        MCP --> GH[tools/github_tool.py: 10 Tools]
+        MCP --> GM[tools/gmail_tool.py: 5 Tools]
+        MCP --> GC[tools/calendar_tool.py: 5 Tools]
+        MCP --> GD[tools/gdocs_tool.py: 4 Tools]
+        MCP --> NT[tools/notion_tool.py: 6 Tools]
+        MCP --> BR[tools/browser_tool.py: 4 Tools]
+    end
+
+    subgraph External Engines & APIs
+        BR <--> Puppeteer[Node.js Puppeteer: puppeteer_runner.js]
+        BR <--> WebhookServer[hooks_server.py: Port 8000 Server]
+        GM & GC & GD <--> GoogleAuth[tools/google_auth.py: OAuth 2.0 Unified Session]
+        GH <--> GitHubAPI[(GitHub REST API)]
+        NT <--> NotionAPI[(Notion REST API)]
+    end
+```
+
+---
+
+## 🚀 Quick Start
+
+### On Debian Linux (Laptop — Intel Core i7-6600U / 8 GB RAM)
+
+1. **Run the automated setup script**:
+   ```bash
+   chmod +x setup_debian.sh
+   ./setup_debian.sh
+   ```
+   *This automatically creates a virtual environment, installs Python packages, sets up Node.js & Puppeteer with Chromium dependencies, pulls the lightweight `llama3.2:3b` model into Ollama, and generates `.env`.*
+
+2. **Configure your tokens**:
+   ```bash
+   nano .env
+   ```
+
+3. **Start Hope**:
+   ```bash
+   source venv/bin/activate
+   python agent.py           # Launch Gradio Web UI on http://127.0.0.1:7860
+   ```
+
+---
+
+### On Windows
+
+1. **Run the PowerShell setup script**:
+   ```powershell
+   .\setup.ps1
+   ```
+
+2. **Configure `.env`**:
+   Copy `.env.example` to `.env` if not already created and add your keys.
+
+3. **Start Hope**:
+   ```powershell
+   python agent.py
+   ```
+
+---
+
+## 🔑 Step-by-Step Integration Setup
+
+### 1. Gemini Brain
+1. Get a free API key at [Google AI Studio](https://aistudio.google.com/).
+2. Add to `.env`:
+   ```env
+   GEMINI_API_KEY=AIzaSy...
+   ```
+
+---
+
+### 2. Local Brain (Ollama)
+Hope automatically detects installed models via `GET http://localhost:11434/api/tags`.
+1. Ensure Ollama is running:
+   ```bash
+   ollama serve
+   ```
+2. Pull the recommended 3B model (sized for 8 GB RAM):
+   ```bash
+   ollama pull llama3.2:3b
+   ```
+   *(Alternative options supported: `ollama pull phi3.5`, `ollama pull qwen2.5:3b`, or `ollama pull gemma-3-4b`)*.
+
+---
+
+### 3. GitHub Integration
+1. Go to [GitHub Settings → Developer Settings → Personal Access Tokens](https://github.com/settings/tokens).
+2. Generate a token with scopes: `repo`, `read:user`, `workflow`.
+3. Add to `.env`:
+   ```env
+   GITHUB_TOKEN=ghp_your_token_here
+   ```
+
+---
+
+### 4. Google Ecosystem (Unified OAuth)
+*A single credentials file authorizes Gmail (read/write), Google Calendar (create/edit), and Google Docs all at once.*
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a project (e.g. `Hope-Agent`).
+3. Enable the following APIs in **APIs & Services → Library**:
+   - **Gmail API**
+   - **Google Calendar API**
+   - **Google Docs API**
+   - **Google Drive API**
+4. Go to **APIs & Services → Credentials**:
+   - Click **Create Credentials → OAuth client ID**.
+   - Select Application type: **Desktop App**.
+   - Download the JSON file and save it as `credentials.json` in the root of the Hope directory.
+5. On your first call to any Google tool, a browser window opens automatically. Approve the permissions once — Hope stores the token in `token.json` and refreshes it silently in the future.
+
+---
+
+### 5. Gmail App Password Fallback (IMAP/SMTP)
+If you prefer not to set up Google Cloud OAuth:
+1. Enable 2-Step Verification in your [Google Account Security](https://myaccount.google.com/security).
+2. Create an [App Password](https://myaccount.google.com/apppasswords) for "Mail".
+3. Add to `.env`:
+   ```env
+   GMAIL_ADDRESS=your.name@gmail.com
+   GMAIL_APP_PASSWORD=abcd efgh ijkl mnop
+   ```
+
+---
+
+### 6. Notion Integration
+1. Visit [Notion Integrations](https://www.notion.so/my-integrations) and click **New integration**.
+2. Name it `Hope` and copy the **Internal Integration Secret**.
+3. Add to `.env`:
+   ```env
+   NOTION_API_KEY=secret_your_token_here
+   ```
+4. In your Notion workspace, open the pages or databases you want Hope to access, click the `...` menu in the top right, select **Connect to**, and choose `Hope`.
+
+---
+
+### 7. Browser Automation (Puppeteer)
+Puppeteer is pre-configured in `package.json`.
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Verify browser engine:
+   ```bash
+   node puppeteer_runner.js test
+   ```
+3. In `.env`:
+   - `PUPPETEER_HEADLESS=true` for silent background execution.
+   - `PUPPETEER_HEADLESS=false` if you want to watch the browser navigate and interact visibly!
+
+---
+
+### 8. Telegram Mobile Interface
+1. Open Telegram and search for `@BotFather`.
+2. Send `/newbot` to create your bot and copy the bot token.
+3. Add to `.env`:
+   ```env
+   TELEGRAM_BOT_TOKEN=123456789:ABC...
+   ```
+4. Message your bot once, then run:
+   ```bash
+   python chatid.py
+   ```
+   Copy your chat ID into `.env`:
+   ```env
+   TELEGRAM_CHAT_ID=your_chat_id
+   ```
+5. Start the bot:
+   ```bash
+   python telegram_bot.py
+   ```
+
+---
+
+## 🛠️ Tool Suite Reference (43 Tools)
+
+### 🐙 GitHub Tools (`tools/github_tool.py`)
+- `github_list_repos(visibility="all", limit=10)` — Lists your repositories with stars and descriptions.
+- `github_get_repo_info(repo_name)` — Gets default branch, open issues, stars, forks, and last push date.
+- `github_read_file(repo_name, file_path, branch="")` — Reads file contents from any repo branch.
+- `github_create_or_update_file(repo_name, file_path, content, commit_message, branch="")` — Commits file changes.
+- `github_list_issues(repo_name, state="open", limit=10)` — Lists issues with numbers, titles, and labels.
+- `github_create_issue(repo_name, title, body="", labels="")` — Opens a new issue.
+- `github_comment_issue(repo_name, issue_number, comment)` — Adds a comment to an issue or PR.
+- `github_list_prs(repo_name, state="open", limit=10)` — Lists pull requests.
+- `github_create_pr(repo_name, title, head, base="main", body="")` — Opens a pull request.
+- `github_search_code(query, repo="")` — Searches code across GitHub or inside a specific repo.
+
+### ✉️ Gmail Tools (`tools/gmail_tool.py`)
+- `gmail_list_messages(query="is:unread", max_results=5)` — Searches emails by query/label.
+- `gmail_read_message(message_id)` — Fetches decoded subject, from, to, date, and body.
+- `gmail_send_email(to, subject, body)` — Sends an email to any recipient.
+- `gmail_reply_email(message_id, body)` — Sends a threaded reply preserving email headers.
+- `gmail_create_draft(to, subject, body)` — Creates a draft in Gmail.
+
+### 📅 Google Calendar Tools (`tools/calendar_tool.py`)
+- `calendar_list_events(days_ahead=7, max_results=15)` — Lists upcoming events with IDs, times, and summaries.
+- `calendar_create_event(summary, start_time, end_time, description="", location="")` — Creates calendar events.
+- `calendar_update_event(event_id, new_start_time="", new_end_time="", new_summary="", new_description="")` — Reschedules or updates events.
+- `calendar_delete_event(event_id)` — Cancels/deletes an event.
+- `calendar_quick_add(text)` — Natural language event creation (e.g. *"Team lunch tomorrow at 1pm"*).
+
+### 🌐 Browser Automation Tools (`tools/browser_tool.py`)
+- `browser_open_and_read(url, wait_selector="")` — Headless page navigation and clean text extraction.
+- `browser_take_screenshot(url, filename="screenshot.png")` — Captures webpage screenshots to workspace.
+- `browser_interact(url, steps_json)` — Executes click, type, wait, and extract sequences.
+- `browser_capture_api(url, api_keyword)` — Intercepts and captures live JSON API requests.
+
+### 📝 Notion Tools (`tools/notion_tool.py`)
+- `notion_search(query="", filter_type="")` — Searches pages or databases.
+- `notion_read_page(page_id)` — Reads full page blocks converted to Markdown.
+- `notion_create_page(parent_page_id, title, content_markdown="")` — Creates a new page.
+- `notion_append_to_page(page_id, content_markdown)` — Appends markdown blocks to an existing page.
+- `notion_query_database(database_id, filter_json="", limit=10)` — Queries database rows.
+- `notion_create_database_item(database_id, title, properties_json="")` — Adds items to a Notion database.
+
+### 📄 Google Docs Tools (`tools/gdocs_tool.py`)
+- `gdocs_create_document(title, initial_content="")` — Creates a new Google Doc and returns its URL.
+- `gdocs_read_document(document_id_or_url)` — Extracts text from a Google Doc by ID or URL.
+- `gdocs_append_text(document_id_or_url, text)` — Appends text to the end of a Google Doc.
+- `gdocs_search_documents(query="", max_results=10)` — Searches Google Drive for documents.
+
+### 🧠 Core Tools (`tools/core.py`)
+- `search_web(query, max_results=5)` — Web search via DuckDuckGo.
+- `fetch_page(url, max_chars=6000)` — Scrapes readable page text with BeautifulSoup/Trafilatura fallback.
+- `list_files(folder=".")` — Lists files in `workspace/`.
+- `read_file(path, max_chars=8000)` — Reads a text file in `workspace/`.
+- `write_file(path, content)` — Writes/overwrites a text file in `workspace/`.
+- `remember(note)` — Saves a fact to `workspace/memory.md`.
+- `recall()` — Returns long-term memories.
+- `current_time()` — Current date and time.
+- `send_email_to_me(subject, body)` — Quick email to owner.
+
+---
+
+## 🧠 Dual-Brain Routing & Modes
+
+Hope's dispatcher (`brain/router.py`) dynamically routes queries:
+- **`auto` mode (Default)**:
+  - *Casual conversations*, greetings, definitions, and memory lookups execute **locally via Ollama** (instant response, 0 API tokens).
+  - *Tool actions*, coding, multi-step workflows, and external service requests route to **Gemini + FastMCP**.
+- **In-Chat Overrides**:
+  - `/local <message>`: Forces local Ollama execution.
+  - `/gemini <message>`: Forces Gemini cloud execution.
+  - `/status`: Displays an instant health report of all brains and connected integrations.
+- **Autonomous Memory Distillation**: When enabled in `config.json`, the local brain runs quietly in a background thread after each chat, extracting lasting preferences about the owner into `workspace/memory.md` without consuming Gemini tokens.
+
+---
+
+## 📱 Running User Interfaces
+
+### 1. Web Chat Interface (Gradio)
+```bash
+python agent.py
+```
+Open [http://127.0.0.1:7860](http://127.0.0.1:7860) in any browser.
+
+### 2. Telegram Bot
+```bash
+python telegram_bot.py
+```
+Control Hope from your phone anywhere in the world.
+
+### 3. Morning Briefing Runner
+```bash
+python briefing.py
+```
+Scans your upcoming calendar schedule, searches for high-priority unread emails, checks reminders, prints the summary, and sends it to your email.
+
+### 4. Webhook Receiver
+```bash
+python hooks_server.py
+```
+Starts an HTTP listener on port 8000 for incoming GitHub pushes, Notion page events, or Zapier/Make automations.
+
+---
+
+## 🧪 Testing & Diagnostics
+
+Run the full automated test suite:
+```bash
+python -m unittest tests/test_hope.py
+```
+
+Check agent and tool connectivity:
+```bash
+python -c "from mcp_agent import MCPAgent; a = MCPAgent(); print(a.status())"
+```
+
+Test Puppeteer browser navigation:
+```bash
+node puppeteer_runner.js test
+```
+
+Test Ollama local brain:
+```bash
+python -c "from brain.local_brain import LocalBrain; b = LocalBrain(); print('Model in use:', b.active_model); print(b.generate('Say ready in 1 word'))"
+```
+
+---
+
+## 📂 Project Directory Structure
+
+```text
+Hope/
+├── brain/                       # Dual-Brain Layer
+│   ├── __init__.py              # Brain package exports
+│   ├── local_brain.py           # Ollama integration (discovery, chat, summarization, memory)
+│   └── router.py                # Smart intent router (heuristics + classifier)
+│
+├── tools/                       # FastMCP Modular Tools Suite
+│   ├── __init__.py              # Master registry (exports ALL_TOOLS)
+│   ├── core.py                  # Web search, page fetch, files, memory, time
+│   ├── github_tool.py           # GitHub integration (10 tools)
+│   ├── gmail_tool.py            # Gmail read/write (5 tools)
+│   ├── calendar_tool.py         # Google Calendar create/edit (5 tools)
+│   ├── browser_tool.py          # Puppeteer wrapper (4 tools)
+│   ├── notion_tool.py           # Notion API integration (6 tools)
+│   ├── gdocs_tool.py            # Google Docs & Drive (4 tools)
+│   └── google_auth.py           # Unified Google OAuth 2.0 helper
+│
+├── workspace/                   # Safe sandbox directory
+│   ├── memory.md                # Long-term owner memory notes
+│   └── webhook_log.jsonl        # Log of received webhook events
+│
+├── tests/                       # Test Suite
+│   └── test_hope.py             # Unit tests for tools, router, fallbacks
+│
+├── agent.py                     # Gradio web chat interface
+├── telegram_bot.py              # Telegram bot runner
+├── briefing.py                  # Morning executive briefing runner
+├── server.py                    # FastMCP tool server
+├── mcp_agent.py                 # Core MCP agent coordinator
+├── hooks_server.py              # Inbound webhook receiver (port 8000)
+├── puppeteer_runner.js          # Node.js Puppeteer browser automation engine
+├── chatid.py                    # Helper to find Telegram chat ID
+├── speedtest.py                 # Latency benchmark tool
+│
+├── setup_debian.sh              # Automated installer for Debian Linux
+├── setup.ps1                    # Automated installer for Windows
+├── config.json                  # Agent configuration
+├── requirements.txt             # Python dependencies
+├── package.json                 # Node.js dependencies (Puppeteer)
+├── .env.example                 # Environment variables template
+├── .gitignore                   # Safe Git ignore rules
+└── README.md                    # Comprehensive documentation
+```
+
+---
+
+## ❓ Troubleshooting & FAQ
+
+#### Q: Google OAuth says "Google hasn't verified this app"
+**A**: When creating your Google Cloud OAuth consent screen in testing mode, click **Advanced** and then click **Go to Hope (unsafe)**. This is normal for private personal desktop applications.
+
+#### Q: Puppeteer throws missing libraries error on Debian Linux
+**A**: On headless Linux, Chromium requires graphic libraries. Run:
+```bash
+sudo apt-get install -y libnss3 libatk-bridge2.0-0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2
+```
+*(The `setup_debian.sh` script does this automatically).*
+
+#### Q: Will Ollama slow down my laptop (8 GB RAM)?
+**A**: No! We deliberately sized Hope for `llama3.2:3b` (~2.2 GB RAM) or `qwen2.5:1.5b` (~1.1 GB RAM). It leaves over 5 GB of RAM completely free for your operating system and web browsing.
+
+#### Q: What if an integration is missing its API key?
+**A**: Hope degrades gracefully. If you ask for GitHub without setting `GITHUB_TOKEN`, Hope will not crash — it will reply with clear step-by-step instructions on how to generate and add the token!
