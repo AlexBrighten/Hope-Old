@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Hope — Personal AI Executive</title>
+  <title>Hope</title>
 
   <!-- PWA & Mobile Web App Meta -->
   <meta name="application-name" content="Hope">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Hope">
-  <meta name="theme-color" content="#090d16">
+  <meta name="theme-color" content="#212121">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
   <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
@@ -18,245 +18,359 @@
   <!-- Inter Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
 
-  <!-- Top App Header -->
-  <header class="app-header">
-    <div class="brand-section">
-      <div class="brand-icon">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-        </svg>
+  <div class="app-container">
+
+    <!-- Mobile Backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- ── Left Sidebar (ChatGPT exact layout) ── -->
+    <aside class="sidebar" id="sidebar">
+      <!-- Sidebar Top Header -->
+      <div class="sidebar-header">
+        <button class="new-chat-btn" id="sidebarNewChatBtn" title="New chat">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          <span>New chat</span>
+        </button>
+
+        <button class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Close sidebar">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+        </button>
       </div>
-      <div class="brand-info">
-        <h1>Hope <span class="status-badge" id="onlineBadge"><span class="status-dot"></span> Online</span></h1>
+
+      <!-- Quick Navigation Items -->
+      <nav class="sidebar-nav">
+        <button class="nav-item active" id="navChatBtn">
+          <div class="nav-item-left">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>Chat</span>
+          </div>
+        </button>
+
+        <button class="nav-item" id="navApprovalsBtn">
+          <div class="nav-item-left">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Approvals</span>
+          </div>
+          <span class="nav-badge" id="sidebarApprovalsBadge" style="display: none;">0</span>
+        </button>
+
+        <button class="nav-item" id="navMemoryBtn">
+          <div class="nav-item-left">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <span>Memory Studio</span>
+          </div>
+        </button>
+
+        <button class="nav-item" id="navBriefingBtn">
+          <div class="nav-item-left">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+            </svg>
+            <span>Morning Briefing</span>
+          </div>
+        </button>
+
+        <button class="nav-item" id="navSettingsBtn">
+          <div class="nav-item-left">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <span>Settings</span>
+          </div>
+        </button>
+      </nav>
+
+      <!-- History Section -->
+      <div class="sidebar-history">
+        <div class="history-section-title">Today</div>
+        <div class="history-item active" id="activeChatItem">Current Chat</div>
+        <div class="history-item" onclick="loadPrompt('Give me my morning briefing')">☀️ Morning Briefing</div>
+        <div class="history-item" onclick="loadPrompt('What is on my Google Calendar today?')">📅 Calendar Inspection</div>
+        <div class="history-item" onclick="loadPrompt('Search unread emails in Gmail')">📬 Email Review</div>
       </div>
-    </div>
 
-    <div class="header-actions">
-      <div class="brain-pill" id="brainModelPill">
-        <span>🧠</span>
-        <span id="brainModelText">Dual-Brain</span>
-      </div>
-
-      <button class="approvals-pill" id="headerApprovalsBtn" title="Pending mutating action approvals">
-        <span>🛡️</span>
-        <span id="headerApprovalsText">0 Approvals</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- Tab Navigation -->
-  <nav class="nav-tabs" role="tablist">
-    <button class="tab-btn active" data-tab="tab-chat" role="tab">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-      </svg>
-      <span>Chat</span>
-    </button>
-
-    <button class="tab-btn" data-tab="tab-approvals" role="tab">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-      </svg>
-      <span>Approvals</span>
-      <span class="tab-badge" id="navApprovalsBadge" style="display: none;">0</span>
-    </button>
-
-    <button class="tab-btn" data-tab="tab-memory" role="tab">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-        <polyline points="14 2 14 8 20 8"></polyline>
-        <line x1="16" y1="13" x2="8" y2="13"></line>
-        <line x1="16" y1="17" x2="8" y2="17"></line>
-        <polyline points="10 9 9 9 8 9"></polyline>
-      </svg>
-      <span>Memory</span>
-    </button>
-
-    <button class="tab-btn" data-tab="tab-briefing" role="tab">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="5"></circle>
-        <line x1="12" y1="1" x2="12" y2="3"></line>
-        <line x1="12" y1="21" x2="12" y2="23"></line>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-        <line x1="1" y1="12" x2="3" y2="12"></line>
-        <line x1="21" y1="12" x2="23" y2="12"></line>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-      </svg>
-      <span>Briefing</span>
-    </button>
-
-    <button class="tab-btn" data-tab="tab-integrations" role="tab">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"></circle>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-      </svg>
-      <span>Settings</span>
-    </button>
-  </nav>
-
-  <!-- Main Application Body -->
-  <main class="app-main">
-
-    <!-- ── Tab 1: Chat ── -->
-    <div class="tab-pane active" id="tab-chat">
-      <div class="chat-container">
-        <div class="chat-history" id="chatHistory">
-          <!-- Initial Welcome Message -->
-          <div class="message-bubble message-agent">
-            <div class="message-header">✨ Hope Executive AI</div>
-            <p>Good day! I am <strong>Hope</strong>, your autonomous executive assistant. I am standing by with Dual-Brain intelligence and direct integration with your GitHub, Gmail, Google Calendar, Docs, Sheets, and Browser automation.</p>
-            <p style="margin-top: 8px; font-size: 0.85em; color: var(--text-muted);">
-              All mutating actions (sending emails, opening pull requests, committing code, deleting events) are protected by your human approval gate.
-            </p>
+      <!-- User Profile Footer -->
+      <div class="sidebar-footer">
+        <div class="user-profile" id="userProfileBtn">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-info">
+            <div class="user-name" id="userName">Alex</div>
+            <div class="user-plan" id="userPlan">Dual-Brain Active</div>
           </div>
         </div>
+      </div>
+    </aside>
 
-        <!-- Suggested Prompts -->
-        <div class="suggestions-bar" id="suggestionsBar">
-          <button class="suggestion-chip" data-prompt="Give me my morning briefing">☀️ Morning briefing</button>
-          <button class="suggestion-chip" data-prompt="What's on my Google Calendar today?">📅 Today's schedule</button>
-          <button class="suggestion-chip" data-prompt="Summarize my unread emails in Gmail">📬 Check emails</button>
-          <button class="suggestion-chip" data-prompt="List any pending PRs and issues across my GitHub repos">🐙 GitHub status</button>
-          <button class="suggestion-chip" data-prompt="/pending">🛡️ Pending approvals</button>
-        </div>
+    <!-- ── Main Chat Area ── -->
+    <main class="main-content">
 
-        <!-- Chat Input Form -->
-        <div class="chat-input-area">
-          <textarea class="chat-input" id="chatInput" placeholder="Ask Hope anything, or issue a command..." rows="1"></textarea>
-          <button class="icon-btn voice-btn" id="voiceBtn" title="Voice Input">
+      <!-- Chat Top App Bar -->
+      <header class="chat-header">
+        <div class="header-left">
+          <button class="header-icon-btn" id="openSidebarBtn" title="Open sidebar">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" y1="19" x2="12" y2="23"></line>
-              <line x1="8" y1="23" x2="16" y2="23"></line>
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <line x1="9" y1="3" x2="9" y2="21"/>
             </svg>
           </button>
-          <button class="icon-btn send-btn" id="sendBtn" title="Send Message">
+
+          <!-- Model Picker Dropdown Button -->
+          <button class="model-selector-btn" id="modelSelectorBtn">
+            <span id="currentModelLabel">Hope 2.0</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+            <span class="model-badge" id="currentModelBadge">Dual-Brain</span>
+          </button>
+        </div>
+
+        <!-- Model Dropdown Menu -->
+        <div class="model-dropdown" id="modelDropdown">
+          <div class="model-option selected" data-mode="auto" id="optAuto">
+            <div style="font-size: 18px;">⚡</div>
+            <div class="model-option-info">
+              <div class="model-option-name">Auto (Smart Hybrid)</div>
+              <div class="model-option-desc">Tools & reasoning route to Gemini; casual talk & memory use local Ollama.</div>
+            </div>
+          </div>
+
+          <div class="model-option" data-mode="cloud" id="optCloud">
+            <div style="font-size: 18px;">☁️</div>
+            <div class="model-option-info">
+              <div class="model-option-name">Cloud-First (Gemini 2.5)</div>
+              <div class="model-option-desc">Deep reasoning and comprehensive FastMCP tool calling.</div>
+            </div>
+          </div>
+
+          <div class="model-option" data-mode="local" id="optLocal">
+            <div style="font-size: 18px;">🔒</div>
+            <div class="model-option-info">
+              <div class="model-option-name">Local-First (Ollama 3B)</div>
+              <div class="model-option-desc">100% private and offline on Intel Core i7 CPU.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Pending Approvals Alert Pill -->
+          <button class="header-approvals-alert" id="headerApprovalsAlert">
+            <span>🛡️</span>
+            <span id="headerApprovalsCount">0 Pending</span>
+          </button>
+
+          <button class="header-icon-btn" id="headerNewChatBtn" title="New chat">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              <path d="M12 5v14M5 12h14"/>
             </svg>
           </button>
         </div>
+      </header>
+
+      <!-- Scrollable Chat Viewport -->
+      <div class="chat-viewport" id="chatViewport">
+
+        <!-- Welcome Hero (Empty State) -->
+        <div class="welcome-hero" id="welcomeHero">
+          <div class="welcome-logo">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+            </svg>
+          </div>
+          <h1 class="welcome-title">What can I help with today?</h1>
+
+          <!-- 4 Suggestion Cards -->
+          <div class="suggestion-grid">
+            <div class="suggestion-card" onclick="loadPrompt('Give me my morning briefing')">
+              <div class="suggestion-title">☀️ Morning briefing</div>
+              <div class="suggestion-subtitle">Synthesize calendar meetings, emails, and pull requests</div>
+            </div>
+
+            <div class="suggestion-card" onclick="loadPrompt('What is on my Google Calendar today?')">
+              <div class="suggestion-title">📅 Check schedule</div>
+              <div class="suggestion-subtitle">Review meetings, appointments, and upcoming events</div>
+            </div>
+
+            <div class="suggestion-card" onclick="loadPrompt('Summarize my unread emails in Gmail')">
+              <div class="suggestion-title">📬 Review emails</div>
+              <div class="suggestion-subtitle">Find urgent messages and draft safety-gated replies</div>
+            </div>
+
+            <div class="suggestion-card" onclick="loadPrompt('List any pending PRs and issues across my GitHub repos')">
+              <div class="suggestion-title">🐙 GitHub status</div>
+              <div class="suggestion-subtitle">Inspect repositories, open issues, and pull requests</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Message Thread -->
+        <div class="chat-thread" id="chatThread" style="display: none;"></div>
+
+      </div>
+
+      <!-- ── Bottom Floating Input Area (ChatGPT exact pill) ── -->
+      <footer class="input-section">
+        <div class="input-box" id="inputBox">
+          <textarea class="chat-textarea" id="chatInput" placeholder="Message Hope..." rows="1"></textarea>
+
+          <div class="input-actions">
+            <!-- Voice Dictation Button -->
+            <button class="input-icon-btn" id="voiceBtn" title="Voice dictation">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+            </button>
+
+            <!-- Circular Upward-Arrow Send Button -->
+            <button class="send-button" id="sendBtn" title="Send message">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="19" x2="12" y2="5"/>
+                <polyline points="5 12 12 5 19 12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="disclaimer-text">
+          Hope can make mistakes. Mutating actions require your approval in the Approvals center.
+        </div>
+      </footer>
+
+    </main>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       MODAL DIALOGS (Approvals, Memory, Briefing, Settings)
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <!-- 1. Approvals Center Modal -->
+  <div class="modal-backdrop" id="approvalsModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🛡️</span>
+          <span>Pending Approvals (<span id="modalPendingCount">0</span>)</span>
+        </div>
+        <button class="modal-close-btn" data-close="approvalsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-muted);">
+          High-impact mutating operations (email sending, commits, PRs, calendar deletes) are held here. Click Approve to authorize execution.
+        </p>
+        <div id="modalPendingList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+
+        <div style="margin-top: 16px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-size: 13.5px; font-weight: 600;">Recent Action History</span>
+            <button class="btn-secondary" id="modalClearApprovalsBtn" style="padding: 4px 10px; font-size: 12px;">Clear History</button>
+          </div>
+          <div id="modalRecentList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
       </div>
     </div>
+  </div>
 
-    <!-- ── Tab 2: Approvals Center ── -->
-    <div class="tab-pane" id="tab-approvals">
-      <div class="approvals-container">
-        <div>
-          <div class="section-title">
-            <span>Pending Approvals (<span id="pendingApprovalsCount">0</span>)</span>
-            <button class="suggestion-chip" id="refreshApprovalsBtn">🔄 Refresh</button>
-          </div>
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
-            High-impact mutating operations (email sending, commits, PRs, deletions) are held here. Click Approve to authorize execution.
+  <!-- 2. Memory Studio Modal -->
+  <div class="modal-backdrop" id="memoryModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🧠</span>
+          <span>Memory & Custom Instructions</span>
+        </div>
+        <button class="modal-close-btn" data-close="memoryModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-muted);">
+          What would you like Hope to know about you to provide better responses? (Stored in <code>workspace/memory.md</code>).
+        </p>
+        <textarea id="modalMemoryTextarea" style="width: 100%; height: 280px; background: #0d0d0d; border: 1px solid var(--border-light); border-radius: 10px; padding: 12px; color: #fff; font-family: var(--font-mono); font-size: 13px; resize: vertical; outline: none;"></textarea>
+        <div style="display: flex; justify-content: flex-end;">
+          <button class="btn-primary" id="modalSaveMemoryBtn">💾 Save Instructions</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Morning Briefing Modal -->
+  <div class="modal-backdrop" id="briefingModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>☀️</span>
+          <span>Executive Morning Briefing</span>
+        </div>
+        <button class="modal-close-btn" data-close="briefingModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <p style="font-size: 13px; color: var(--text-muted);">
+            Compile today's schedule, high-priority emails, and GitHub pull requests.
           </p>
-          <div id="pendingList" style="display: flex; flex-direction: column; gap: 12px;">
-            <!-- Populated via app.js -->
-          </div>
+          <button class="btn-primary" id="modalGenerateBriefingBtn">⚡ Generate Briefing</button>
         </div>
-
-        <div style="margin-top: 20px;">
-          <div class="section-title">
-            <span>Recent Action History</span>
-            <button class="suggestion-chip" id="clearApprovalsBtn">🧹 Clear History</button>
-          </div>
-          <div id="recentList" style="display: flex; flex-direction: column; gap: 10px;">
-            <!-- Populated via app.js -->
-          </div>
+        <div id="modalBriefingContent" style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 12px; padding: 16px; min-height: 120px; line-height: 1.6;">
+          Click <strong>Generate Briefing</strong> to synthesize today's schedule and action items.
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- ── Tab 3: Long-Term Memory ── -->
-    <div class="tab-pane" id="tab-memory">
-      <div class="memory-editor-card">
-        <div class="section-title">
-          <span>🧠 Executive Memory Notes (<code>workspace/memory.md</code>)</span>
-          <button class="btn-approve" id="saveMemoryBtn" style="flex: none; padding: 6px 16px;">
-            <span>💾 Save Notes</span>
-          </button>
+  <!-- 4. Settings Modal -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>⚙️</span>
+          <span>Settings & Connected Services</span>
         </div>
-        <p style="font-size: 0.84rem; color: var(--text-muted);">
-          These notes are injected into Hope's memory context during every task. Hope also automatically distills lasting facts here in the background using your local Ollama model.
-        </p>
-        <textarea class="memory-textarea" id="memoryTextarea" placeholder="Loading memory notes..."></textarea>
+        <button class="modal-close-btn" data-close="settingsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Connected Tool Integrations</div>
+        <div id="modalIntegrationsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px;"></div>
+
+        <div style="margin-top: 16px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">📱 Mobile & Remote Access (Free $0.00 Setup)</div>
+          <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">
+            • <strong>Tailscale VPN</strong>: Access Hope from anywhere at <code>http://&lt;your-tailscale-ip&gt;:8080</code>.<br>
+            • <strong>Add to Home Screen</strong>: In Safari or Chrome, tap "Add to Home Screen" to run Hope full-screen with native app icon.<br>
+            • <strong>Lock Screen Push Alerts</strong>: Set <code>NTFY_TOPIC=my-secret-topic</code> in <code>.env</code>. Install the free <a href="https://ntfy.sh" target="_blank" style="color: #38bdf8;">ntfy app</a> to receive 1-tap Approve/Reject buttons right on your phone lock screen!
+          </p>
+        </div>
       </div>
     </div>
-
-    <!-- ── Tab 4: Executive Briefing ── -->
-    <div class="tab-pane" id="tab-briefing">
-      <div class="briefing-hero">
-        <h2 style="font-size: 1.3rem; font-weight: 700;">☀️ Today's Executive Briefing</h2>
-        <p style="color: #cbd5e1; font-size: 0.9rem;">
-          One-click synthesized morning report covering your Google Calendar meetings, Gmail inbox, GitHub pull requests, and actionable recommendations for today.
-        </p>
-        <div>
-          <button class="btn-approve" id="generateBriefingBtn" style="display: inline-flex; width: auto; padding: 10px 22px;">
-            <span>⚡ Generate Today's Briefing</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="briefing-report-card" id="briefingContainer">
-        <div class="empty-state" id="briefingEmpty">
-          Click <strong>"Generate Today's Briefing"</strong> to compile your schedule, emails, and updates for today.
-        </div>
-        <div id="briefingContent" style="display: none;"></div>
-      </div>
-    </div>
-
-    <!-- ── Tab 5: Integrations & Settings ── -->
-    <div class="tab-pane" id="tab-integrations">
-      <!-- Routing Mode Card -->
-      <div class="routing-card">
-        <div class="section-title">Dual-Brain Routing Architecture</div>
-        <p style="font-size: 0.85rem; color: var(--text-muted);">
-          Select how Hope handles queries between your Cloud Brain (Gemini 2.5 Flash Lite) and Local Brain (Ollama on Intel Core i7).
-        </p>
-        <div class="routing-options">
-          <div class="routing-pill selected" data-mode="auto" id="pillAuto">
-            <div class="routing-pill-title">⚡ Auto (Smart)</div>
-            <div class="routing-pill-desc">Tools & complex tasks use Gemini; general talk & memory distillation use local Ollama.</div>
-          </div>
-          <div class="routing-pill" data-mode="cloud" id="pillCloud">
-            <div class="routing-pill-title">☁️ Cloud-First</div>
-            <div class="routing-pill-desc">Always routes to Gemini with local brain as backup.</div>
-          </div>
-          <div class="routing-pill" data-mode="local" id="pillLocal">
-            <div class="routing-pill-title">🔒 Local-First</div>
-            <div class="routing-pill-desc">Runs entirely on Ollama for maximum privacy. Falls back to cloud only for tools.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Mobile Access & Tailscale Guidance -->
-      <div class="routing-card" style="border-left: 4px solid var(--accent-cyan);">
-        <div class="section-title" style="margin-bottom: 6px;">📱 Mobile & Remote Access (Free $0.00 Setup)</div>
-        <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">
-          • <strong>Tailscale VPN</strong>: Install Tailscale on your Debian PC and Phone. Access Hope anywhere at <code>http://&lt;your-tailscale-ip&gt;:8080</code>.<br>
-          • <strong>Add to Home Screen</strong>: In Safari (iOS: Share &rarr; Add to Home Screen) or Chrome (Android: Menu &rarr; Install App) to run Hope full-screen with native app icon.<br>
-          • <strong>Lock Screen Push Alerts</strong>: Set <code>NTFY_TOPIC=my-secret-hope-alerts</code> in <code>.env</code>. Install the free <a href="https://ntfy.sh" target="_blank" style="color: #38bdf8;">ntfy mobile app</a> to receive real-time action approval buttons on your phone lock screen!
-        </p>
-      </div>
-
-      <!-- Active Integrations Grid -->
-      <div class="section-title" style="margin-top: 10px;">Connected Tool Integrations</div>
-      <div class="integrations-grid" id="integrationsGrid">
-        <!-- Rendered dynamically via app.js -->
-      </div>
-    </div>
-
-  </main>
+  </div>
 
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
@@ -265,4 +379,3 @@
   <script src="/static/app.js"></script>
 </body>
 </html>
-

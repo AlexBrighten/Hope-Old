@@ -1,86 +1,117 @@
 /**
- * Hope AI Agent — Executive Dashboard Application Logic
+ * Hope AI Agent — ChatGPT-Identical Application Logic
  * Pure Vanilla ES6 — Ultra-lightweight, zero build step, lightning fast.
  */
 
 // ── Application State ──────────────────────────────────────────────────────────
 const state = {
-  activeTab: 'tab-chat',
-  pendingCount: 0,
   isGenerating: false,
   isRecording: false,
+  pendingCount: 0,
   routingMode: 'auto',
   lastStatus: null,
 };
 
 // ── DOM Element References ───────────────────────────────────────────────────
 const elements = {
-  tabBtns: document.querySelectorAll('.tab-btn'),
-  tabPanes: document.querySelectorAll('.tab-pane'),
-  headerApprovalsBtn: document.getElementById('headerApprovalsBtn'),
-  headerApprovalsText: document.getElementById('headerApprovalsText'),
-  navApprovalsBadge: document.getElementById('navApprovalsBadge'),
-  brainModelText: document.getElementById('brainModelText'),
-  onlineBadge: document.getElementById('onlineBadge'),
+  // Sidebar
+  sidebar: document.getElementById('sidebar'),
+  sidebarBackdrop: document.getElementById('sidebarBackdrop'),
+  sidebarToggleBtn: document.getElementById('sidebarToggleBtn'),
+  openSidebarBtn: document.getElementById('openSidebarBtn'),
+  sidebarNewChatBtn: document.getElementById('sidebarNewChatBtn'),
+  headerNewChatBtn: document.getElementById('headerNewChatBtn'),
+  sidebarApprovalsBadge: document.getElementById('sidebarApprovalsBadge'),
+  userName: document.getElementById('userName'),
+  userPlan: document.getElementById('userPlan'),
+  userAvatar: document.getElementById('userAvatar'),
+  // Navigation
+  navChatBtn: document.getElementById('navChatBtn'),
+  navApprovalsBtn: document.getElementById('navApprovalsBtn'),
+  navMemoryBtn: document.getElementById('navMemoryBtn'),
+  navBriefingBtn: document.getElementById('navBriefingBtn'),
+  navSettingsBtn: document.getElementById('navSettingsBtn'),
+  userProfileBtn: document.getElementById('userProfileBtn'),
+  // Header & Model Picker
+  modelSelectorBtn: document.getElementById('modelSelectorBtn'),
+  modelDropdown: document.getElementById('modelDropdown'),
+  currentModelLabel: document.getElementById('currentModelLabel'),
+  currentModelBadge: document.getElementById('currentModelBadge'),
+  headerApprovalsAlert: document.getElementById('headerApprovalsAlert'),
+  headerApprovalsCount: document.getElementById('headerApprovalsCount'),
   // Chat
-  chatHistory: document.getElementById('chatHistory'),
+  chatViewport: document.getElementById('chatViewport'),
+  welcomeHero: document.getElementById('welcomeHero'),
+  chatThread: document.getElementById('chatThread'),
   chatInput: document.getElementById('chatInput'),
   sendBtn: document.getElementById('sendBtn'),
   voiceBtn: document.getElementById('voiceBtn'),
-  suggestionsBar: document.getElementById('suggestionsBar'),
-  // Approvals
-  pendingList: document.getElementById('pendingList'),
-  recentList: document.getElementById('recentList'),
-  pendingApprovalsCount: document.getElementById('pendingApprovalsCount'),
-  refreshApprovalsBtn: document.getElementById('refreshApprovalsBtn'),
-  clearApprovalsBtn: document.getElementById('clearApprovalsBtn'),
-  // Memory
-  memoryTextarea: document.getElementById('memoryTextarea'),
-  saveMemoryBtn: document.getElementById('saveMemoryBtn'),
-  // Briefing
-  generateBriefingBtn: document.getElementById('generateBriefingBtn'),
-  briefingContainer: document.getElementById('briefingContainer'),
-  briefingContent: document.getElementById('briefingContent'),
-  briefingEmpty: document.getElementById('briefingEmpty'),
-  // Settings
-  routingPills: document.querySelectorAll('.routing-pill'),
-  integrationsGrid: document.getElementById('integrationsGrid'),
+  // Modals
+  approvalsModal: document.getElementById('approvalsModal'),
+  modalPendingCount: document.getElementById('modalPendingCount'),
+  modalPendingList: document.getElementById('modalPendingList'),
+  modalRecentList: document.getElementById('modalRecentList'),
+  modalClearApprovalsBtn: document.getElementById('modalClearApprovalsBtn'),
+  memoryModal: document.getElementById('memoryModal'),
+  modalMemoryTextarea: document.getElementById('modalMemoryTextarea'),
+  modalSaveMemoryBtn: document.getElementById('modalSaveMemoryBtn'),
+  briefingModal: document.getElementById('briefingModal'),
+  modalGenerateBriefingBtn: document.getElementById('modalGenerateBriefingBtn'),
+  modalBriefingContent: document.getElementById('modalBriefingContent'),
+  settingsModal: document.getElementById('settingsModal'),
+  modalIntegrationsGrid: document.getElementById('modalIntegrationsGrid'),
   toastContainer: document.getElementById('toastContainer'),
 };
 
-// ── Toast Notification Helper ────────────────────────────────────────────────
-function showToast(message, type = 'success', duration = 3500) {
+// ── Toast Notifications ──────────────────────────────────────────────────────
+function showToast(message, type = 'success', duration = 3000) {
   const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  const icon = type === 'success' ? '✅' : '⚠️';
-  toast.innerHTML = `<span>${icon}</span> <span>${escapeHtml(message)}</span>`;
+  toast.className = 'toast';
+  const icon = type === 'success' ? '✓' : '⚠️';
+  toast.innerHTML = `<span style="color:${type === 'success' ? '#10a37f' : '#f87171'};font-weight:700;">${icon}</span> <span>${escapeHtml(message)}</span>`;
   elements.toastContainer.appendChild(toast);
 
   setTimeout(() => {
     toast.style.opacity = '0';
-    toast.style.transform = 'translateX(20px)';
-    toast.style.transition = 'all 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
+    toast.style.transform = 'translateY(8px)';
+    toast.style.transition = 'all 0.25s ease';
+    setTimeout(() => toast.remove(), 250);
   }, duration);
 }
 
-// ── Simple Safe Markdown Formatter ───────────────────────────────────────────
+// ── Markdown Formatter with ChatGPT Code Blocks ───────────────────────────────
 function formatMarkdown(text) {
   if (!text) return '';
   let html = escapeHtml(text);
 
-  // Multi-line code blocks
+  // Multi-line code blocks with language bar & Copy button
   html = html.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
-    return `<pre><code class="language-${lang}">${code}</code></pre>`;
+    const language = lang || 'code';
+    const codeId = 'code-' + Math.random().toString(36).substr(2, 9);
+    return `
+      <div class="code-block-container">
+        <div class="code-block-header">
+          <span>${language}</span>
+          <button class="copy-code-btn" onclick="copyCode('${codeId}', this)">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span>Copy code</span>
+          </button>
+        </div>
+        <pre class="code-block-content"><code id="${codeId}">${code}</code></pre>
+      </div>
+    `;
   });
 
   // Inline code
   html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
 
   // Headers
-  html = html.replace(/^### (.*$)/gim, '<h3 style="font-size:1.05rem;font-weight:700;margin:12px 0 6px 0;color:#e2e8f0;">$1</h3>');
-  html = html.replace(/^## (.*$)/gim, '<h2 style="font-size:1.15rem;font-weight:700;margin:14px 0 8px 0;color:#f8fafc;">$1</h2>');
-  html = html.replace(/^# (.*$)/gim, '<h1 style="font-size:1.25rem;font-weight:800;margin:16px 0 10px 0;color:#ffffff;">$1</h1>');
+  html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+  html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
 
   // Bold & Italics
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -89,13 +120,13 @@ function formatMarkdown(text) {
   // Lists
   html = html.replace(/^\s*•\s+(.*$)/gim, '<li>$1</li>');
   html = html.replace(/^\s*-\s+(.*$)/gim, '<li>$1</li>');
-  html = html.replace(/(<li>.*<\/li>)/s, '<ul style="margin:8px 0 8px 20px;">$1</ul>');
+  html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
 
   // Links
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#38bdf8;text-decoration:underline;">$1</a>');
 
-  // Line breaks
-  html = html.replace(/\n\n/g, '<p style="margin-top:8px;"></p>');
+  // Paragraphs & Line breaks
+  html = html.replace(/\n\n/g, '<p></p>');
   html = html.replace(/\n/g, '<br>');
 
   return html;
@@ -110,146 +141,219 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// ── Tab Navigation ───────────────────────────────────────────────────────────
-function switchTab(targetTabId) {
-  state.activeTab = targetTabId;
-
-  elements.tabBtns.forEach((btn) => {
-    const isTarget = btn.getAttribute('data-tab') === targetTabId;
-    btn.classList.toggle('active', isTarget);
+window.copyCode = function (id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    btn.innerHTML = `<span>✓ Copied!</span>`;
+    setTimeout(() => {
+      btn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        <span>Copy code</span>
+      `;
+    }, 2000);
   });
+};
 
-  elements.tabPanes.forEach((pane) => {
-    const isTarget = pane.id === targetTabId;
-    pane.classList.toggle('active', isTarget);
-  });
-
-  if (targetTabId === 'tab-approvals') {
-    fetchApprovals();
-  } else if (targetTabId === 'tab-memory') {
-    fetchMemory();
-  } else if (targetTabId === 'tab-integrations') {
-    fetchStatus();
-  }
-}
-
-elements.tabBtns.forEach((btn) => {
-  btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
-});
-
-elements.headerApprovalsBtn.addEventListener('click', () => {
-  switchTab('tab-approvals');
-});
-
-// ── Chat Functions ───────────────────────────────────────────────────────────
-function appendMessage(role, text) {
-  const bubble = document.createElement('div');
-  bubble.className = `message-bubble ${role === 'user' ? 'message-user' : 'message-agent'}`;
-
-  if (role === 'agent') {
-    bubble.innerHTML = `<div class="message-header">✨ Hope</div>${formatMarkdown(text)}`;
+// ── Sidebar Toggle & Responsiveness ──────────────────────────────────────────
+function toggleSidebar() {
+  const isMobile = window.innerWidth <= 768;
+  if (isMobile) {
+    const isOpen = elements.sidebar.classList.contains('mobile-open');
+    elements.sidebar.classList.toggle('mobile-open', !isOpen);
+    elements.sidebarBackdrop.classList.toggle('visible', !isOpen);
   } else {
-    bubble.textContent = text;
+    const isCollapsed = elements.sidebar.classList.contains('collapsed');
+    elements.sidebar.classList.toggle('collapsed', !isCollapsed);
+    localStorage.setItem('hope_sidebar_collapsed', !isCollapsed);
   }
-
-  elements.chatHistory.appendChild(bubble);
-  elements.chatHistory.scrollTop = elements.chatHistory.scrollHeight;
-  return bubble;
 }
 
-function appendThinkingBubble() {
-  const bubble = document.createElement('div');
-  bubble.className = 'message-bubble message-agent thinking-bubble';
-  bubble.innerHTML = `
-    <div class="tool-banner">
-      <div class="tool-spinner"></div>
-      <span>Dual-Brain processing with tools & memory...</span>
-    </div>
-  `;
-  elements.chatHistory.appendChild(bubble);
-  elements.chatHistory.scrollTop = elements.chatHistory.scrollHeight;
-  return bubble;
+elements.sidebarToggleBtn.addEventListener('click', toggleSidebar);
+elements.openSidebarBtn.addEventListener('click', toggleSidebar);
+elements.sidebarBackdrop.addEventListener('click', () => {
+  elements.sidebar.classList.remove('mobile-open');
+  elements.sidebarBackdrop.classList.remove('visible');
+});
+
+// Load saved desktop sidebar state
+if (window.innerWidth > 768 && localStorage.getItem('hope_sidebar_collapsed') === 'true') {
+  elements.sidebar.classList.add('collapsed');
 }
 
-async function sendMessage(text) {
-  const message = (text || elements.chatInput.value).trim();
-  if (!message || state.isGenerating) return;
+// ── Model Selector Dropdown ──────────────────────────────────────────────────
+elements.modelSelectorBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  elements.modelDropdown.classList.toggle('open');
+});
+
+document.addEventListener('click', (e) => {
+  if (!elements.modelDropdown.contains(e.target) && e.target !== elements.modelSelectorBtn) {
+    elements.modelDropdown.classList.remove('open');
+  }
+});
+
+document.querySelectorAll('.model-option').forEach((opt) => {
+  opt.addEventListener('click', async () => {
+    const mode = opt.getAttribute('data-mode');
+    try {
+      const res = await fetch('/api/config/routing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail);
+
+      document.querySelectorAll('.model-option').forEach((o) => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      elements.modelDropdown.classList.remove('open');
+      showToast(data.message);
+      fetchStatus();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  });
+});
+
+// ── Chat Messaging Dynamics ──────────────────────────────────────────────────
+function updateSendButton() {
+  const hasText = elements.chatInput.value.trim().length > 0;
+  elements.sendBtn.classList.toggle('active', hasText && !state.isGenerating);
+}
+
+elements.chatInput.addEventListener('input', () => {
+  // Auto-expand textarea
+  elements.chatInput.style.height = 'auto';
+  elements.chatInput.style.height = Math.min(elements.chatInput.scrollHeight, 200) + 'px';
+  updateSendButton();
+});
+
+elements.chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (elements.chatInput.value.trim().length > 0 && !state.isGenerating) {
+      sendMessage();
+    }
+  }
+});
+
+elements.sendBtn.addEventListener('click', () => {
+  if (elements.chatInput.value.trim().length > 0 && !state.isGenerating) {
+    sendMessage();
+  }
+});
+
+window.loadPrompt = function (text) {
+  elements.chatInput.value = text;
+  elements.chatInput.style.height = 'auto';
+  elements.chatInput.style.height = Math.min(elements.chatInput.scrollHeight, 200) + 'px';
+  updateSendButton();
+  sendMessage();
+};
+
+function startNewChat() {
+  elements.chatThread.innerHTML = '';
+  elements.chatThread.style.display = 'none';
+  elements.welcomeHero.style.display = 'flex';
+  elements.chatInput.value = '';
+  elements.chatInput.style.height = 'auto';
+  updateSendButton();
+  elements.chatInput.focus();
+}
+
+elements.sidebarNewChatBtn.addEventListener('click', startNewChat);
+elements.headerNewChatBtn.addEventListener('click', startNewChat);
+elements.navChatBtn.addEventListener('click', startNewChat);
+
+async function sendMessage(promptText) {
+  const text = (promptText || elements.chatInput.value).trim();
+  if (!text || state.isGenerating) return;
+
+  // Hide welcome hero, show thread
+  elements.welcomeHero.style.display = 'none';
+  elements.chatThread.style.display = 'flex';
 
   // Clear input
   elements.chatInput.value = '';
   elements.chatInput.style.height = 'auto';
+  updateSendButton();
 
-  // Append user message
-  appendMessage('user', message);
+  // 1. Append User Message
+  appendUserMessage(text);
 
-  // Show thinking indicator
+  // 2. Append Assistant Thinking Placeholder
   state.isGenerating = true;
-  elements.sendBtn.disabled = true;
-  elements.sendBtn.style.opacity = '0.5';
-  const thinkingBubble = appendThinkingBubble();
+  updateSendButton();
+  const agentRow = appendAgentMessageSkeleton();
 
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: message }),
+      body: JSON.stringify({ message: text }),
     });
 
-    if (!res.ok) {
-      throw new Error(`Server returned HTTP ${res.status}`);
-    }
-
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    thinkingBubble.remove();
-    appendMessage('agent', data.reply);
 
-    // Update pending approvals counter if changed
+    // Populate Agent Body
+    const bodyEl = agentRow.querySelector('.agent-body');
+    bodyEl.innerHTML = formatMarkdown(data.reply);
+
+    // Update pending approvals if changed
     if (typeof data.pending_count === 'number') {
       updateApprovalsBadge(data.pending_count);
     }
   } catch (err) {
-    thinkingBubble.remove();
-    appendMessage('agent', `⚠️ Error communicating with Hope: ${err.message}`);
+    const bodyEl = agentRow.querySelector('.agent-body');
+    bodyEl.innerHTML = `<span style="color:#f87171;">⚠️ Error communicating with Hope: ${escapeHtml(err.message)}</span>`;
     showToast(err.message, 'error');
   } finally {
     state.isGenerating = false;
-    elements.sendBtn.disabled = false;
-    elements.sendBtn.style.opacity = '1';
+    updateSendButton();
+    elements.chatViewport.scrollTop = elements.chatViewport.scrollHeight;
     elements.chatInput.focus();
   }
 }
 
-// Chat input listeners
-elements.sendBtn.addEventListener('click', () => sendMessage());
+function appendUserMessage(text) {
+  const row = document.createElement('div');
+  row.className = 'message-row user';
+  row.innerHTML = `<div class="user-bubble">${escapeHtml(text)}</div>`;
+  elements.chatThread.appendChild(row);
+  elements.chatViewport.scrollTop = elements.chatViewport.scrollHeight;
+}
 
-elements.chatInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-});
+function appendAgentMessageSkeleton() {
+  const row = document.createElement('div');
+  row.className = 'message-row agent';
+  row.innerHTML = `
+    <div class="agent-wrapper">
+      <div class="agent-avatar">
+        <svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+      </div>
+      <div class="agent-body">
+        <div class="tool-disclosure">
+          <div class="tool-spinner"></div>
+          <span>Thinking...</span>
+        </div>
+      </div>
+    </div>
+  `;
+  elements.chatThread.appendChild(row);
+  elements.chatViewport.scrollTop = elements.chatViewport.scrollHeight;
+  return row;
+}
 
-// Auto-expand textarea
-elements.chatInput.addEventListener('input', () => {
-  elements.chatInput.style.height = 'auto';
-  elements.chatInput.style.height = Math.min(elements.chatInput.scrollHeight, 120) + 'px';
-});
-
-// Suggested prompt buttons
-elements.suggestionsBar.addEventListener('click', (e) => {
-  const chip = e.target.closest('.suggestion-chip');
-  if (chip) {
-    const prompt = chip.getAttribute('data-prompt');
-    sendMessage(prompt);
-  }
-});
-
-// Voice Input (Web Speech API)
+// ── Voice Input (Web Speech API) ─────────────────────────────────────────────
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = new SpeechRecognition();
   recognition.continuous = false;
-  recognition.interimResults = false;
   recognition.lang = 'en-US';
 
   recognition.onstart = () => {
@@ -261,8 +365,11 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
   recognition.onresult = (event) => {
     const transcript = event.results[0][0].transcript;
     elements.chatInput.value = transcript;
+    elements.chatInput.style.height = 'auto';
+    elements.chatInput.style.height = Math.min(elements.chatInput.scrollHeight, 200) + 'px';
+    updateSendButton();
     elements.chatInput.focus();
-    showToast(`Heard: "${transcript}"`, 'success', 2500);
+    showToast(`Heard: "${transcript}"`);
   };
 
   recognition.onerror = (event) => {
@@ -285,19 +392,82 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
   elements.voiceBtn.style.display = 'none';
 }
 
-// ── Approvals Center ─────────────────────────────────────────────────────────
+// ── Modals Management (Approvals, Memory, Briefing, Settings) ────────────────
+function openModal(modalEl) {
+  modalEl.classList.add('open');
+}
+
+function closeModal(modalEl) {
+  modalEl.classList.remove('open');
+}
+
+document.querySelectorAll('[data-close]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const modalId = btn.getAttribute('data-close');
+    const modal = document.getElementById(modalId);
+    if (modal) closeModal(modal);
+  });
+});
+
+document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) closeModal(backdrop);
+  });
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-backdrop.open').forEach(closeModal);
+    elements.modelDropdown.classList.remove('open');
+  }
+});
+
+// Approvals Modal triggers
+elements.navApprovalsBtn.addEventListener('click', () => {
+  openModal(elements.approvalsModal);
+  fetchApprovals();
+});
+
+elements.headerApprovalsAlert.addEventListener('click', () => {
+  openModal(elements.approvalsModal);
+  fetchApprovals();
+});
+
+// Memory Modal trigger
+elements.navMemoryBtn.addEventListener('click', () => {
+  openModal(elements.memoryModal);
+  fetchMemory();
+});
+
+// Briefing Modal trigger
+elements.navBriefingBtn.addEventListener('click', () => {
+  openModal(elements.briefingModal);
+});
+
+// Settings Modal trigger
+elements.navSettingsBtn.addEventListener('click', () => {
+  openModal(elements.settingsModal);
+  fetchStatus();
+});
+
+elements.userProfileBtn.addEventListener('click', () => {
+  openModal(elements.settingsModal);
+  fetchStatus();
+});
+
+// ── Approvals Center Logic ───────────────────────────────────────────────────
 function updateApprovalsBadge(count) {
   state.pendingCount = count;
-  elements.headerApprovalsText.textContent = `${count} ${count === 1 ? 'Approval' : 'Approvals'}`;
-  elements.pendingApprovalsCount.textContent = count;
+  elements.modalPendingCount.textContent = count;
+  elements.headerApprovalsCount.textContent = `${count} Pending`;
 
   if (count > 0) {
-    elements.headerApprovalsBtn.classList.add('has-pending');
-    elements.navApprovalsBadge.style.display = 'inline-block';
-    elements.navApprovalsBadge.textContent = count;
+    elements.headerApprovalsAlert.classList.add('visible');
+    elements.sidebarApprovalsBadge.style.display = 'inline-block';
+    elements.sidebarApprovalsBadge.textContent = count;
   } else {
-    elements.headerApprovalsBtn.classList.remove('has-pending');
-    elements.navApprovalsBadge.style.display = 'none';
+    elements.headerApprovalsAlert.classList.remove('visible');
+    elements.sidebarApprovalsBadge.style.display = 'none';
   }
 }
 
@@ -316,14 +486,14 @@ async function fetchApprovals() {
 }
 
 function renderPendingList(pendingItems) {
-  elements.pendingList.innerHTML = '';
+  elements.modalPendingList.innerHTML = '';
 
   if (!pendingItems || pendingItems.length === 0) {
-    elements.pendingList.innerHTML = `
-      <div class="empty-state">
-        <div style="font-size: 2rem; margin-bottom: 8px;">🛡️</div>
-        <p style="font-weight: 600; color: #f8fafc;">All clear! No actions pending approval.</p>
-        <p style="font-size: 0.8rem; margin-top: 4px;">Mutating commands (emails, commits, PRs, calendar deletes) will appear here for 1-click confirmation.</p>
+    elements.modalPendingList.innerHTML = `
+      <div style="text-align:center;padding:24px;color:var(--text-muted);background:var(--bg-surface);border-radius:12px;">
+        <div style="font-size: 24px; margin-bottom: 6px;">🛡️</div>
+        <p style="font-weight:600;color:var(--text-primary);">All clear! No actions pending approval.</p>
+        <p style="font-size: 12px; margin-top: 4px;">Mutating actions (email send, PR create, commit, calendar delete) will appear here for 1-click confirmation.</p>
       </div>
     `;
     return;
@@ -331,194 +501,137 @@ function renderPendingList(pendingItems) {
 
   pendingItems.forEach((item) => {
     const card = document.createElement('div');
-    card.className = 'approval-card pending';
+    card.className = 'modal-approval-card';
     card.id = `card-${item.action_id}`;
 
     card.innerHTML = `
-      <div class="approval-card-top">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="action-badge">${escapeHtml(item.action_name)}</span>
-          <span style="font-size:0.75rem;font-family:var(--font-mono);color:var(--text-dim);">${item.action_id}</span>
-        </div>
-        <span class="approval-time">${item.time_str || ''}</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span class="approval-badge">${escapeHtml(item.action_name)}</span>
+        <span style="font-size:12px;color:var(--text-muted);">${item.time_str || ''}</span>
       </div>
-
-      <div class="approval-summary">
-        ${escapeHtml(item.summary)}
-      </div>
-
-      <div class="approval-actions-bar">
-        <button class="btn-approve" onclick="handleActionApproval('${item.action_id}', true)">
-          <span>✓ Approve & Execute</span>
-        </button>
-        <button class="btn-reject" onclick="handleActionApproval('${item.action_id}', false)">
-          <span>✕ Reject</span>
-        </button>
+      <div style="font-size:14px;color:var(--text-primary);line-height:1.45;">${escapeHtml(item.summary)}</div>
+      <div style="font-size:11.5px;font-family:var(--font-mono);color:var(--text-muted);">ID: ${item.action_id}</div>
+      <div class="modal-btn-row">
+        <button class="btn-primary" onclick="handleActionApproval('${item.action_id}', true)">✓ Approve & Execute</button>
+        <button class="btn-danger" onclick="handleActionApproval('${item.action_id}', false)">✕ Reject</button>
       </div>
     `;
 
-    elements.pendingList.appendChild(card);
+    elements.modalPendingList.appendChild(card);
   });
 }
 
 function renderRecentList(recentItems) {
-  elements.recentList.innerHTML = '';
+  elements.modalRecentList.innerHTML = '';
   const filtered = (recentItems || []).filter((r) => r.status !== 'pending');
 
   if (filtered.length === 0) {
-    elements.recentList.innerHTML = `<p style="font-size:0.84rem;color:var(--text-dim);">No past actions recorded.</p>`;
+    elements.modalRecentList.innerHTML = `<p style="font-size:12.5px;color:var(--text-muted);">No past action records.</p>`;
     return;
   }
 
   filtered.forEach((item) => {
-    const card = document.createElement('div');
-    card.className = 'approval-card';
-    card.style.opacity = '0.85';
+    const div = document.createElement('div');
+    div.style.cssText = 'background:var(--bg-surface);padding:10px 14px;border-radius:10px;font-size:13px;display:flex;justify-content:space-between;align-items:center;';
 
-    let statusBadgeColor = '#94a3b8';
-    if (item.status === 'approved' || item.status === 'executed') statusBadgeColor = '#34d399';
-    if (item.status === 'rejected') statusBadgeColor = '#f87171';
-    if (item.status === 'expired') statusBadgeColor = '#fbbf24';
+    let color = '#34d399';
+    if (item.status === 'rejected') color = '#f87171';
+    if (item.status === 'expired') color = '#fbbf24';
 
-    card.innerHTML = `
-      <div class="approval-card-top">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="action-badge" style="background:rgba(255,255,255,0.05);color:#cbd5e1;">${escapeHtml(item.action_name)}</span>
-          <span style="font-size:0.75rem;color:${statusBadgeColor};font-weight:700;text-transform:uppercase;">● ${item.status}</span>
-        </div>
-        <span class="approval-time">${item.time_str || ''}</span>
+    div.innerHTML = `
+      <div>
+        <span style="font-weight:600;">${escapeHtml(item.action_name)}</span> — <span style="color:var(--text-muted);">${escapeHtml(item.summary)}</span>
       </div>
-      <div style="font-size:0.86rem;color:var(--text-muted);">${escapeHtml(item.summary)}</div>
+      <span style="font-size:11px;font-weight:700;color:${color};text-transform:uppercase;">● ${item.status}</span>
     `;
 
-    elements.recentList.appendChild(card);
+    elements.modalRecentList.appendChild(div);
   });
 }
 
-// Global action handler exposed for onclick
 window.handleActionApproval = async function (actionId, isApproved) {
-  const card = document.getElementById(`card-${actionId}`);
-  if (card) {
-    card.style.opacity = '0.5';
-    card.style.pointerEvents = 'none';
-  }
-
   const endpoint = isApproved ? `/api/approvals/${actionId}/approve` : `/api/approvals/${actionId}/reject`;
-
   try {
     const res = await fetch(endpoint, { method: 'POST' });
     const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.detail || 'Action failed');
-    }
-
+    if (!res.ok) throw new Error(data.detail || 'Failed');
     showToast(data.message, isApproved ? 'success' : 'error');
     fetchApprovals();
   } catch (err) {
     showToast(err.message, 'error');
-    if (card) {
-      card.style.opacity = '1';
-      card.style.pointerEvents = 'auto';
-    }
   }
 };
 
-elements.refreshApprovalsBtn.addEventListener('click', fetchApprovals);
-
-elements.clearApprovalsBtn.addEventListener('click', async () => {
+elements.modalClearApprovalsBtn.addEventListener('click', async () => {
   try {
     const res = await fetch('/api/approvals/clear', { method: 'POST' });
     const data = await res.json();
-    showToast(`Cleared ${data.cleared_count} resolved action records.`);
+    showToast(`Cleared ${data.cleared_count} action logs.`);
     fetchApprovals();
   } catch (err) {
     showToast(err.message, 'error');
   }
 });
 
-// ── Long-Term Memory ─────────────────────────────────────────────────────────
+// ── Memory Studio Logic ──────────────────────────────────────────────────────
 async function fetchMemory() {
   try {
     const res = await fetch('/api/memory');
     const data = await res.json();
-    elements.memoryTextarea.value = data.content || '';
+    elements.modalMemoryTextarea.value = data.content || '';
   } catch (err) {
-    showToast('Failed to load memory file', 'error');
+    showToast('Failed to load memory', 'error');
   }
 }
 
-elements.saveMemoryBtn.addEventListener('click', async () => {
-  const content = elements.memoryTextarea.value;
-  elements.saveMemoryBtn.disabled = true;
-  elements.saveMemoryBtn.innerHTML = '<span>⏳ Saving...</span>';
-
+elements.modalSaveMemoryBtn.addEventListener('click', async () => {
+  const content = elements.modalMemoryTextarea.value;
+  elements.modalSaveMemoryBtn.disabled = true;
+  elements.modalSaveMemoryBtn.textContent = 'Saving...';
   try {
     const res = await fetch('/api/memory', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
     });
-
     if (!res.ok) throw new Error('Save failed');
-    showToast('Long-term memory notes saved successfully!');
+    showToast('Custom memory notes saved!');
+    closeModal(elements.memoryModal);
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
-    elements.saveMemoryBtn.disabled = false;
-    elements.saveMemoryBtn.innerHTML = '<span>💾 Save Notes</span>';
+    elements.modalSaveMemoryBtn.disabled = false;
+    elements.modalSaveMemoryBtn.textContent = '💾 Save Instructions';
   }
 });
 
-// ── Executive Briefing ───────────────────────────────────────────────────────
-elements.generateBriefingBtn.addEventListener('click', async () => {
-  elements.generateBriefingBtn.disabled = true;
-  elements.generateBriefingBtn.innerHTML = `
-    <div class="tool-spinner" style="margin-right:8px;"></div>
-    <span>Compiling schedule, emails & updates...</span>
+// ── Morning Briefing Logic ───────────────────────────────────────────────────
+elements.modalGenerateBriefingBtn.addEventListener('click', async () => {
+  elements.modalGenerateBriefingBtn.disabled = true;
+  elements.modalGenerateBriefingBtn.textContent = 'Generating...';
+  elements.modalBriefingContent.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;color:var(--text-muted);">
+      <div class="tool-spinner"></div>
+      <span>Scanning calendar, emails, and pull requests with Dual-Brain...</span>
+    </div>
   `;
 
   try {
     const res = await fetch('/api/briefing', { method: 'POST' });
-    if (!res.ok) throw new Error('Failed to generate briefing');
+    if (!res.ok) throw new Error('Briefing generation failed');
     const data = await res.json();
-
-    elements.briefingEmpty.style.display = 'none';
-    elements.briefingContent.style.display = 'block';
-    elements.briefingContent.innerHTML = formatMarkdown(data.briefing);
-    showToast("Today's Executive Briefing compiled!", 'success');
+    elements.modalBriefingContent.innerHTML = formatMarkdown(data.briefing);
+    showToast("Today's briefing compiled!");
   } catch (err) {
+    elements.modalBriefingContent.innerHTML = `<span style="color:#f87171;">⚠️ ${escapeHtml(err.message)}</span>`;
     showToast(err.message, 'error');
   } finally {
-    elements.generateBriefingBtn.disabled = false;
-    elements.generateBriefingBtn.innerHTML = '<span>⚡ Re-generate Briefing</span>';
+    elements.modalGenerateBriefingBtn.disabled = false;
+    elements.modalGenerateBriefingBtn.textContent = '⚡ Re-generate Briefing';
   }
 });
 
-// ── Routing Settings ─────────────────────────────────────────────────────────
-elements.routingPills.forEach((pill) => {
-  pill.addEventListener('click', async () => {
-    const mode = pill.getAttribute('data-mode');
-    try {
-      const res = await fetch('/api/config/routing', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail);
-
-      elements.routingPills.forEach((p) => p.classList.remove('selected'));
-      pill.classList.add('selected');
-      showToast(data.message, 'success');
-      fetchStatus();
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  });
-});
-
-// ── Status & Integrations Grid ───────────────────────────────────────────────
+// ── Status & Integrations ────────────────────────────────────────────────────
 async function fetchStatus() {
   try {
     const res = await fetch('/api/status');
@@ -526,128 +639,82 @@ async function fetchStatus() {
     const st = await res.json();
     state.lastStatus = st;
 
-    // Brain pill
-    let brainLabel = 'Cloud (Gemini)';
-    if (st.local_brain_available) {
-      brainLabel = `Dual: ${st.local_brain_model} + Gemini`;
+    // Header badge
+    if (st.routing_mode === 'cloud') {
+      elements.currentModelLabel.textContent = 'Hope (Gemini 2.5)';
+      elements.currentModelBadge.textContent = 'Cloud';
+    } else if (st.routing_mode === 'local') {
+      elements.currentModelLabel.textContent = `Hope (${st.local_brain_model || 'Ollama'})`;
+      elements.currentModelBadge.textContent = 'Local';
+    } else {
+      elements.currentModelLabel.textContent = 'Hope 2.0';
+      elements.currentModelBadge.textContent = 'Auto';
     }
-    elements.brainModelText.textContent = brainLabel;
 
-    // Routing pill selection
-    elements.routingPills.forEach((p) => {
-      p.classList.toggle('selected', p.getAttribute('data-mode') === st.routing_mode);
+    // Owner info in footer
+    if (st.owner) elements.userName.textContent = st.owner;
+    elements.userPlan.textContent = st.local_brain_available ? `Dual-Brain (${st.local_brain_model})` : 'Gemini Cloud Brain';
+
+    // Model options selection check
+    document.querySelectorAll('.model-option').forEach((opt) => {
+      opt.classList.toggle('selected', opt.getAttribute('data-mode') === st.routing_mode);
     });
 
-    // Update approvals badge
+    // Approvals badge
     updateApprovalsBadge(st.pending_approvals_count);
 
-    // Render integrations grid
-    renderIntegrations(st);
+    // Integrations grid
+    renderIntegrationsGrid(st);
   } catch (err) {
-    elements.onlineBadge.innerHTML = `<span class="status-dot" style="background:#ef4444;"></span> Offline`;
+    console.error('fetchStatus error:', err);
   }
 }
 
-function renderIntegrations(st) {
+function renderIntegrationsGrid(st) {
   const ints = st.integrations || {};
-
-  const items = [
-    {
-      name: 'GitHub',
-      icon: '🐙',
-      active: ints.github,
-      desc: ints.github ? 'Active with fine-grained repo token & approval gate' : 'Unconfigured (Add GITHUB_TOKEN to .env)',
-    },
-    {
-      name: 'Gmail',
-      icon: '📬',
-      active: ints.gmail,
-      desc: ints.gmail ? 'Connected with draft-only safety & sending gates' : 'Unconfigured (Add Google OAuth token.json)',
-    },
-    {
-      name: 'Google Calendar',
-      icon: '📅',
-      active: ints.calendar,
-      desc: ints.calendar ? 'Live meeting schedules & deletion gates' : 'Unconfigured (OAuth or CALENDAR_ICAL_URL)',
-    },
-    {
-      name: 'Google Docs',
-      icon: '📝',
-      active: ints.gdocs,
-      desc: ints.gdocs ? 'Drive document search, reading & append' : 'Unconfigured (Google OAuth token.json)',
-    },
-    {
-      name: 'Google Sheets',
-      icon: '📊',
-      active: ints.gsheets,
-      desc: ints.gsheets ? 'Spreadsheet CRUD, cell range read/write & append' : 'Unconfigured (Google OAuth token.json)',
-    },
-    {
-      name: 'Browser Automation',
-      icon: '🌐',
-      active: ints.puppeteer,
-      desc: ints.puppeteer ? 'Puppeteer headless/headful runner ready' : 'Runner missing',
-    },
-    {
-      name: 'Local Ollama Brain',
-      icon: '💻',
-      active: st.local_brain_available,
-      desc: st.local_brain_available
-        ? `Model: ${st.local_brain_model} (sized for Intel Core i7 8GB RAM)`
-        : 'Offline (Start Ollama locally on Debian)',
-    },
-    {
-      name: 'Mobile Push (ntfy.sh)',
-      icon: '🔔',
-      active: st.ntfy_configured,
-      desc: st.ntfy_configured
-        ? 'Real-time 1-tap lock screen notifications active'
-        : 'Set NTFY_TOPIC in .env for free mobile alerts',
-    },
+  const list = [
+    { name: 'GitHub', icon: '🐙', active: ints.github, desc: 'Repo search, read, issues, PRs' },
+    { name: 'Gmail', icon: '📬', active: ints.gmail, desc: 'Draft-only safety & search' },
+    { name: 'Google Calendar', icon: '📅', active: ints.calendar, desc: 'Schedule inspection & events' },
+    { name: 'Google Docs', icon: '📝', active: ints.gdocs, desc: 'Drive doc read, create & append' },
+    { name: 'Google Sheets', icon: '📊', active: ints.gsheets, desc: 'Spreadsheet read/write ranges' },
+    { name: 'Browser Automation', icon: '🌐', active: ints.puppeteer, desc: 'Headless Puppeteer runner' },
+    { name: 'Local Ollama Brain', icon: '💻', active: st.local_brain_available, desc: st.local_brain_model || 'Offline' },
+    { name: 'Mobile Push (ntfy.sh)', icon: '🔔', active: st.ntfy_configured, desc: 'Free lock-screen alerts' },
   ];
 
-  elements.integrationsGrid.innerHTML = items
+  elements.modalIntegrationsGrid.innerHTML = list
     .map(
       (item) => `
-    <div class="integration-card">
-      <div class="integration-top">
-        <div class="integration-title">
-          <span>${item.icon}</span>
-          <span>${escapeHtml(item.name)}</span>
-        </div>
-        <span class="status-badge" style="${item.active ? '' : 'background:rgba(255,255,255,0.05);color:#94a3b8;border-color:rgba(255,255,255,0.1);'}">
-          <span class="status-dot" style="${item.active ? '' : 'background:#94a3b8;'}"></span>
-          ${item.active ? 'Active' : 'Unconfigured'}
-        </span>
+    <div style="background:var(--bg-surface);padding:12px;border-radius:10px;border:1px solid var(--border-light);display:flex;flex-direction:column;gap:4px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-weight:600;font-size:13.5px;">${item.icon} ${escapeHtml(item.name)}</span>
+        <span style="font-size:10.5px;font-weight:700;color:${item.active ? '#34d399' : '#8e8e8e'};">${item.active ? '● ACTIVE' : '○ OFF'}</span>
       </div>
-      <div class="integration-desc">${escapeHtml(item.desc)}</div>
+      <span style="font-size:12px;color:var(--text-muted);">${escapeHtml(item.desc)}</span>
     </div>
   `
     )
     .join('');
 }
 
-// ── PWA & Service Worker Registration ─────────────────────────────────────────
+// ── Service Worker Registration ──────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/sw.js')
-      .then(() => console.log('[PWA] Service Worker registered.'))
-      .catch((err) => console.log('[PWA] Service Worker registration failed:', err));
+    navigator.serviceWorker.register('/sw.js').catch((err) => console.log('SW registration error:', err));
   });
 }
 
-// ── Initialization & Polling ─────────────────────────────────────────────────
+// ── Startup Polling ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   fetchStatus();
   fetchApprovals();
 
-  // Background polling every 4 seconds for instant approval badge updates
+  // Poll approvals & status every 4 seconds
   setInterval(() => {
     fetchStatus();
-    if (state.activeTab === 'tab-approvals') {
+    if (elements.approvalsModal.classList.contains('open')) {
       fetchApprovals();
     }
   }, 4000);
 });
-
