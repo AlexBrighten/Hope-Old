@@ -74,6 +74,7 @@ def main():
                     f"• Gmail: {'🟢 Active' if s['integrations']['gmail'] else '⚪ Disabled'}\n"
                     f"• Calendar: {'🟢 Active' if s['integrations']['calendar'] else '⚪ Disabled'}\n"
                     f"• Google Docs: {'🟢 Active' if s['integrations']['gdocs'] else '⚪ Disabled'}\n"
+                    f"• Google Sheets: {'🟢 Active' if s['integrations']['gsheets'] else '⚪ Disabled'}\n"
                     f"• Puppeteer: {'🟢 Active' if s['integrations']['puppeteer'] else '⚪ Disabled'}"
                 )
                 send(chat, reply)
@@ -83,7 +84,7 @@ def main():
             if text.lower() == "/help":
                 reply = (
                     f"Commands for {NAME}:\n"
-                    f"• Send any natural message to execute tasks across GitHub, Gmail, Calendar, Browser, Docs.\n"
+                    f"• Send any natural message to execute tasks across GitHub, Gmail, Calendar, Browser, Docs, Sheets.\n"
                     f"• `/status` — View connectivity and active brains\n"
                     f"• `/local <text>` — Force local Ollama execution (offline)\n"
                     f"• `/gemini <text>` — Force Gemini cloud execution\n"

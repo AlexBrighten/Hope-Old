@@ -33,6 +33,7 @@ def respond(message: str, history: list):
             f"- Gmail: {'🟢 Active' if s['integrations']['gmail'] else '⚪ Not configured'}\n"
             f"- Calendar: {'🟢 Active' if s['integrations']['calendar'] else '⚪ Not configured'}\n"
             f"- Google Docs: {'🟢 Active' if s['integrations']['gdocs'] else '⚪ Not configured'}\n"
+            f"- Google Sheets: {'🟢 Active' if s['integrations']['gsheets'] else '⚪ Not configured'}\n"
             f"- Browser (Puppeteer): {'🟢 Ready' if s['integrations']['puppeteer'] else '⚪ Not installed'}\n"
         )
         return out
@@ -42,7 +43,7 @@ def respond(message: str, history: list):
 description = (
     f"Personal autonomous executive assistant for {OWNER}. "
     "Powered by Dual-Brain architecture (Gemini + Local Ollama). "
-    "Equipped with GitHub, Gmail, Calendar, Browser, and Google Docs integrations. "
+    "Equipped with GitHub, Gmail, Calendar, Browser, Google Docs, and Google Sheets integrations. "
     "Type `/status` to view active integrations."
 )
 

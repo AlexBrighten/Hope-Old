@@ -4,7 +4,7 @@
 - ☁️ **Primary Cloud Brain**: Google Gemini 2.5/3.5 (for deep reasoning, code generation, and multi-step tool execution).
 - 🧠 **Secondary Local Brain**: Local Ollama model (**`llama3.2:3b`**, **`phi3.5`**, or **`qwen2.5:3b`**) optimized for edge hardware (Intel Core i7-6600U, 8 GB RAM on Debian) for smart query routing, privacy-first local tasks, content distillation, and 100% offline fallback.
 
-Hope operates over **37 FastMCP tools** connecting directly to your everyday productivity stack: **GitHub**, **Gmail**, **Google Calendar**, **Browser Automation (Puppeteer & API Hooks)**, and **Google Docs**.
+Hope operates over **43 FastMCP tools** connecting directly to your everyday productivity stack: **GitHub**, **Gmail**, **Google Calendar**, **Browser Automation (Puppeteer & API Hooks)**, **Google Docs**, and **Google Sheets**.
 
 ---
 
@@ -23,7 +23,7 @@ Hope operates over **37 FastMCP tools** connecting directly to your everyday pro
   - [5. Gmail App Password Fallback (IMAP/SMTP)](#5-gmail-app-password-fallback-imapsmtp)
   - [6. Browser Automation (Puppeteer)](#6-browser-automation-puppeteer)
   - [7. Telegram Mobile Interface](#7-telegram-mobile-interface)
-- [🛠️ Tool Suite Reference (37 Tools)](#️-tool-suite-reference-37-tools)
+- [🛠️ Tool Suite Reference (43 Tools)](#️-tool-suite-reference-43-tools)
 - [🧠 Dual-Brain Routing & Modes](#-dual-brain-routing--modes)
 - [📱 Running User Interfaces](#-running-user-interfaces)
 - [🧪 Testing & Diagnostics](#-testing--diagnostics)
@@ -41,6 +41,7 @@ Hope operates over **37 FastMCP tools** connecting directly to your everyday pro
 | **📅 Google Calendar** | Inspect daily schedule, schedule meetings with attendees/location, reschedule/update events, delete events, and natural language `quickAdd`. |
 | **🌐 Browser Automation** | Full headless or visible Puppeteer web navigation, visual screenshots, interactive form filling (click, type, wait), PDF export, and network API JSON interception. |
 | **📄 Google Docs** | Search docs in Google Drive, extract structured document content, create new documents, and append formatted sections. |
+| **📊 Google Sheets** | Create spreadsheets, read cell ranges as tables, write/overwrite matrices, append row entries, list tabs, and search spreadsheets. |
 | **🧠 Second Brain (Ollama)** | Intent classification, local fast replies with **0 API tokens**, email/page summarization before sending to Gemini, and autonomous memory archiving to `memory.md`. |
 | **🪝 Inbound Webhook Server** | Standalone webhook listener on port 8000 handling GitHub push/PR events or custom webhooks to trigger Hope. |
 
@@ -58,20 +59,21 @@ flowchart TD
         LocalBrain <-->|Memory Digest / Distilled Context| CloudBrain
     end
 
-    subgraph FastMCP Tool Suite [37 Registered Tools]
+    subgraph FastMCP Tool Suite [43 Registered Tools]
         CloudBrain <--> MCP[server.py: FastMCP Server]
         MCP --> Core[tools/core.py: 9 Tools]
         MCP --> GH[tools/github_tool.py: 10 Tools]
         MCP --> GM[tools/gmail_tool.py: 5 Tools]
         MCP --> GC[tools/calendar_tool.py: 5 Tools]
         MCP --> GD[tools/gdocs_tool.py: 4 Tools]
+        MCP --> GS[tools/gsheets_tool.py: 6 Tools]
         MCP --> BR[tools/browser_tool.py: 4 Tools]
     end
 
     subgraph External Engines & APIs
         BR <--> Puppeteer[Node.js Puppeteer: puppeteer_runner.js]
         BR <--> WebhookServer[hooks_server.py: Port 8000 Server]
-        GM & GC & GD <--> GoogleAuth[tools/google_auth.py: OAuth 2.0 Unified Session]
+        GM & GC & GD & GS <--> GoogleAuth[tools/google_auth.py: OAuth 2.0 Unified Session]
         GH <--> GitHubAPI[(GitHub REST API)]
     end
 ```
@@ -163,6 +165,7 @@ Hope automatically detects installed models via `GET http://localhost:11434/api/
    - **Gmail API**
    - **Google Calendar API**
    - **Google Docs API**
+   - **Google Sheets API**
    - **Google Drive API**
 4. Go to **APIs & Services → Credentials**:
    - Click **Create Credentials → OAuth client ID**.
@@ -222,7 +225,7 @@ Puppeteer is pre-configured in `package.json`.
 
 ---
 
-## 🛠️ Tool Suite Reference (37 Tools)
+## 🛠️ Tool Suite Reference (43 Tools)
 
 ### 🐙 GitHub Tools (`tools/github_tool.py`)
 - `github_list_repos(visibility="all", limit=10)` — Lists your repositories with stars and descriptions.
@@ -261,6 +264,14 @@ Puppeteer is pre-configured in `package.json`.
 - `gdocs_read_document(document_id_or_url)` — Extracts text from a Google Doc by ID or URL.
 - `gdocs_append_text(document_id_or_url, text)` — Appends text to the end of a Google Doc.
 - `gdocs_search_documents(query="", max_results=10)` — Searches Google Drive for documents.
+
+### 📊 Google Sheets Tools (`tools/gsheets_tool.py`)
+- `gsheets_create_spreadsheet(title, sheet_names="Sheet1")` — Creates a new Google Spreadsheet with tabs.
+- `gsheets_read_range(spreadsheet_id_or_url, range_name="A1:Z100")` — Reads cell values into a markdown table.
+- `gsheets_write_range(spreadsheet_id_or_url, range_name, values_json)` — Overwrites a cell range with a 2D JSON array.
+- `gsheets_append_rows(spreadsheet_id_or_url, range_name, rows_json)` — Appends rows to the end of a sheet.
+- `gsheets_get_sheet_names(spreadsheet_id_or_url)` — Lists all tabs, sheet IDs, and row/column counts.
+- `gsheets_search_spreadsheets(query="", max_results=10)` — Searches Google Drive for spreadsheets.
 
 ### 🧠 Core Tools (`tools/core.py`)
 - `search_web(query, max_results=5)` — Web search via DuckDuckGo.
@@ -358,6 +369,7 @@ Hope/
 │   ├── calendar_tool.py         # Google Calendar create/edit (5 tools)
 │   ├── browser_tool.py          # Puppeteer wrapper (4 tools)
 │   ├── gdocs_tool.py            # Google Docs & Drive (4 tools)
+│   ├── gsheets_tool.py          # Google Sheets integration (6 tools)
 │   └── google_auth.py           # Unified Google OAuth 2.0 helper
 │
 ├── workspace/                   # Safe sandbox directory

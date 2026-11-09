@@ -41,6 +41,13 @@ from tools.gdocs_tool import (
     gdocs_append_text, gdocs_search_documents,
 )
 
+from tools.gsheets_tool import ALL as GSHEETS_TOOLS
+from tools.gsheets_tool import (
+    gsheets_create_spreadsheet, gsheets_read_range,
+    gsheets_write_range, gsheets_append_rows,
+    gsheets_get_sheet_names, gsheets_search_spreadsheets,
+)
+
 from tools.browser_tool import ALL as BROWSER_TOOLS
 from tools.browser_tool import (
     browser_open_and_read, browser_take_screenshot,
@@ -59,6 +66,7 @@ ALL_TOOLS = (
     + GMAIL_TOOLS
     + CALENDAR_TOOLS
     + GDOCS_TOOLS
+    + GSHEETS_TOOLS
     + BROWSER_TOOLS
 )
 

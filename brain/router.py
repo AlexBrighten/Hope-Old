@@ -20,6 +20,7 @@ _CLOUD_KEYWORDS = re.compile(
     r"email|gmail|inbox|send mail|draft|reply mail|"
     r"calendar|schedule|meeting|event|reschedule|"
     r"google doc|gdoc|document|"
+    r"gsheet|google sheet|spreadsheet|excel|worksheet|"
     r"browse|screenshot|puppeteer|scrape|navigate|"
     r"search the web|look up|fetch|"
     r"write code|debug|refactor|implement|deploy|"

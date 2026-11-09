@@ -14,7 +14,7 @@ class TestHopeInfrastructure(unittest.TestCase):
     def test_tools_count(self):
         """Verify all modular tools are registered in ALL_TOOLS."""
         import tools
-        self.assertGreaterEqual(len(tools.ALL_TOOLS), 35)
+        self.assertGreaterEqual(len(tools.ALL_TOOLS), 40)
         tool_names = [fn.__name__ for fn in tools.ALL_TOOLS]
 
         # Verify Core tools
@@ -44,6 +44,12 @@ class TestHopeInfrastructure(unittest.TestCase):
         self.assertIn("gdocs_create_document", tool_names)
         self.assertIn("gdocs_read_document", tool_names)
         self.assertIn("gdocs_append_text", tool_names)
+
+        # Verify Google Sheets tools
+        self.assertIn("gsheets_create_spreadsheet", tool_names)
+        self.assertIn("gsheets_read_range", tool_names)
+        self.assertIn("gsheets_write_range", tool_names)
+        self.assertIn("gsheets_append_rows", tool_names)
 
         # Verify Browser tools
         self.assertIn("browser_open_and_read", tool_names)
@@ -102,6 +108,12 @@ class TestHopeInfrastructure(unittest.TestCase):
         from tools.gdocs_tool import gdocs_read_document
         res = gdocs_read_document("sample_id")
         self.assertTrue("Google OAuth is not configured" in res or "Error" in res or "Content" in res)
+
+    def test_gsheets_graceful_unconfigured(self):
+        """Google Sheets functions should return helpful instructions when unconfigured."""
+        from tools.gsheets_tool import gsheets_read_range
+        res = gsheets_read_range("sample_id", "A1:B2")
+        self.assertTrue("Google OAuth is not configured" in res or "Error" in res or "Range" in res)
 
 
 if __name__ == "__main__":
