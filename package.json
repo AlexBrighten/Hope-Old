@@ -1,0 +1,13 @@
+{
+  "name": "hope-browser-engine",
+  "version": "1.0.0",
+  "description": "Puppeteer browser automation engine for Hope AI agent",
+  "main": "puppeteer_runner.js",
+  "scripts": {
+    "test-browser": "node puppeteer_runner.js test"
+  },
+  "dependencies": {
+    "puppeteer": "^24.0.0"
+  }
+}
+
