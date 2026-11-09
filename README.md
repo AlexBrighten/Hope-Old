@@ -17,20 +17,23 @@ Access Hope anywhere from your **desktop browser** or **phone** via a modern, sm
 - [🚀 Quick Start](#-quick-start)
   - [On Debian Linux (Laptop)](#on-debian-linux-laptop--intel-core-i7-6600u--8-gb-ram)
   - [On Windows](#on-windows)
+  - [24/7 Background Service on Debian (systemd)](#247-background-service-on-debian-systemd)
 - [📱 Executive Web App & Mobile Phone Access](#-executive-web-app--mobile-phone-access)
-  - [Access from Phone (100% Free via Tailscale)](#1-access-from-phone-100-free-via-tailscale)
-  - [Lock-Screen Push Notifications & 1-Click Approvals (ntfy.sh)](#2-lock-screen-push-notifications--1-click-approvals-ntfysh)
-  - [Install as Native App (PWA)](#3-install-as-native-app-pwa)
+  - [1. Dashboard Tabs Breakdown](#1-dashboard-tabs-breakdown)
+  - [2. Access from Phone (100% Free via Tailscale)](#2-access-from-phone-100-free-via-tailscale)
+  - [3. Lock-Screen Push Notifications & 1-Click Approvals (ntfy.sh)](#3-lock-screen-push-notifications--1-click-approvals-ntfysh)
+  - [4. Install as Native App (PWA)](#4-install-as-native-app-pwa)
 - [🔑 Step-by-Step Integration Setup](#-step-by-step-integration-setup)
   - [1. Gemini Brain](#1-gemini-brain)
   - [2. Local Brain (Ollama)](#2-local-brain-ollama)
-  - [3. GitHub Integration](#3-github-integration-security-fine-grained-token)
+  - [3. GitHub Integration (Security: Fine-Grained Token)](#3-github-integration-security-fine-grained-token)
   - [4. Google Ecosystem (Unified OAuth for Gmail, Calendar, Docs, Sheets)](#4-google-ecosystem-unified-oauth)
   - [5. Gmail App Password Fallback (IMAP/SMTP)](#5-gmail-app-password-fallback-imapsmtp)
   - [6. Browser Automation (Puppeteer)](#6-browser-automation-puppeteer)
 - [🛠️ Tool Suite Reference (43 Tools)](#️-tool-suite-reference-43-tools)
 - [🧠 Dual-Brain Routing & Modes](#-dual-brain-routing--modes)
 - [🛡️ Security & Human-in-the-Loop Safeguards](#️-security--human-in-the-loop-safeguards)
+- [📡 REST & Streaming API Reference](#-rest--streaming-api-reference)
 - [🧪 Testing & Diagnostics](#-testing--diagnostics)
 - [📂 Project Directory Structure](#-project-directory-structure)
 - [❓ Troubleshooting & FAQ](#-troubleshooting--faq)
@@ -129,11 +132,74 @@ flowchart TD
 
 ---
 
+### 24/7 Background Service on Debian (systemd)
+
+To make Hope automatically boot and stay running in the background as a reliable service on Debian:
+
+1. Create a systemd unit file `/etc/systemd/system/hope.service`:
+   ```ini
+   [Unit]
+   Description=Hope AI Personal Executive Agent
+   After=network.target
+
+   [Service]
+   Type=simple
+   User=YOUR_USERNAME
+   WorkingDirectory=/home/YOUR_USERNAME/Hope
+   ExecStart=/home/YOUR_USERNAME/Hope/venv/bin/python app.py
+   Restart=always
+   RestartSec=5
+   EnvironmentFile=/home/YOUR_USERNAME/Hope/.env
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+   *(Replace `YOUR_USERNAME` with your actual Debian username).*
+
+2. Enable and start the service:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now hope
+   ```
+
+3. Check service health:
+   ```bash
+   sudo systemctl status hope
+   ```
+
+---
+
 ## 📱 Executive Web App & Mobile Phone Access
 
-Hope includes a dedicated web application and Progressive Web App (PWA) designed to give you complete executive control from both desktop and phone with **$0.00 spend**.
+Hope includes a zero-build, responsive web application and Progressive Web App (PWA) designed to give you complete executive control from both desktop and phone with **$0.00 spend**.
 
-### 1. Access from Phone (100% Free via Tailscale)
+### 1. Dashboard Tabs Breakdown
+
+The dashboard is organized into 5 intuitive sections:
+1. 💬 **Live Chat**:
+   - Conversational interface with markdown formatting, code block rendering, and auto-scrolling.
+   - Visual step indicator showing Dual-Brain reasoning and tool calls.
+   - Interactive prompt suggestion chips (*"Morning briefing"*, *"Today's schedule"*, *"Check emails"*, *"GitHub status"*).
+   - Hands-free voice speech-to-text input (Web Speech API).
+2. 🛡️ **Approvals Center**:
+   - Real-time card view of all staged mutating actions (email send, PR create, commit, calendar delete).
+   - Pulsing header badge that alerts you whenever an action needs your review.
+   - **1-Click [✓ Approve & Execute]** and **[✕ Reject]** buttons.
+   - Resolved action history log with one-click cleanup.
+3. 🧠 **Memory Studio**:
+   - Live Markdown editor for `workspace/memory.md`.
+   - Allows direct editing of your enduring preferences, projects, and rules.
+   - Saves notes immediately and injects them into Hope's context on every turn.
+4. ☀️ **Executive Morning Briefing**:
+   - One-click morning briefing generator.
+   - Scans today's Google Calendar meetings, summarizes urgent unread emails, and checks open pull requests.
+5. ⚙️ **Settings & Dual-Brain Routing**:
+   - Real-time routing mode switcher: **Auto (Smart Hybrid)**, **Cloud-First (Gemini)**, and **Local-First (Ollama)**.
+   - Live status cards displaying connectivity and health for GitHub, Gmail, Calendar, Docs, Sheets, Browser, Ollama, and ntfy.
+
+---
+
+### 2. Access from Phone (100% Free via Tailscale)
 Tailscale creates a secure, encrypted peer-to-peer mesh network between your devices without exposing any ports to the public internet:
 1. Install [Tailscale](https://tailscale.com/) on your Debian PC:
    ```bash
@@ -153,7 +219,7 @@ Tailscale creates a secure, encrypted peer-to-peer mesh network between your dev
 
 ---
 
-### 2. Lock-Screen Push Notifications & 1-Click Approvals (ntfy.sh)
+### 3. Lock-Screen Push Notifications & 1-Click Approvals (ntfy.sh)
 Hope integrates with [ntfy.sh](https://ntfy.sh) to deliver free real-time push alerts with actionable buttons straight to your phone's lock screen:
 1. Choose a unique secret topic name (e.g., `alex-hope-alerts-99x`).
 2. Add to `.env`:
@@ -166,7 +232,7 @@ Hope integrates with [ntfy.sh](https://ntfy.sh) to deliver free real-time push a
 
 ---
 
-### 3. Install as Native App (PWA)
+### 4. Install as Native App (PWA)
 Hope is a fully-configured Progressive Web App:
 - **iOS (iPhone/iPad)**: In Safari, tap the **Share** button &rarr; **Add to Home Screen**.
 - **Android**: In Chrome, tap the **three dots menu** &rarr; **Install App** or **Add to Home screen**.
@@ -357,6 +423,7 @@ Hope includes strict safety boundaries to protect your credentials, repositories
   - In the **Approvals** tab: click **[✓ Approve & Execute]** or **[✕ Reject]**.
   - In chat: reply `yes act-1a2b` or `no act-1a2b`.
   - On phone: tap the **Approve** button directly on the notification!
+- **Expiry & Replay Protection**: Actions automatically expire after 30 minutes, and approved actions are marked executed so they cannot be replayed.
 
 ### 3. Fine-Grained GitHub Tokens & Repository Allowlist
 - Hope recommends and requires **Fine-Grained Personal Access Tokens** scoped to specific repositories only.
@@ -372,6 +439,26 @@ Hope includes strict safety boundaries to protect your credentials, repositories
 
 ---
 
+## 📡 REST & Streaming API Reference
+
+Hope provides a clean REST API running on port `8080`:
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/status` | Returns system health, brain model statuses, active integrations, and pending action counts. |
+| `POST` | `/api/chat` | Send a chat message (`{"message": "..."}`). Automatically parses approval commands and status checks. |
+| `GET` | `/api/chat/stream?message=...` | Server-Sent Events (SSE) live stream with tool activity notifications. |
+| `GET` | `/api/approvals` | List all pending actions awaiting confirmation and recent action history. |
+| `POST` | `/api/approvals/{id}/approve` | Approve and authorize execution of a staged mutating action. |
+| `POST` | `/api/approvals/{id}/reject` | Reject and cancel a staged action. |
+| `POST` | `/api/approvals/clear` | Purge expired and resolved action logs. |
+| `GET` | `/api/memory` | Retrieve contents of `workspace/memory.md`. |
+| `POST` | `/api/memory` | Update long-term memory notes (`{"content": "..."}`). |
+| `POST` | `/api/briefing` | Trigger instant compilation of today's executive morning report. |
+| `POST` | `/api/config/routing` | Update Dual-Brain routing mode (`{"mode": "auto" \| "cloud" \| "local"}`). |
+
+---
+
 ## 🧪 Testing & Diagnostics
 
 Run the full automated test suite:
@@ -379,9 +466,14 @@ Run the full automated test suite:
 python -m unittest tests/test_hope.py
 ```
 
-Check agent status via REST API:
+Check agent health via curl:
 ```bash
-python -c "import requests; print(requests.get('http://localhost:8080/api/status').json())"
+curl http://localhost:8080/api/status
+```
+
+Check pending approvals via curl:
+```bash
+curl http://localhost:8080/api/approvals
 ```
 
 Test Puppeteer browser navigation:
